@@ -12,16 +12,13 @@
     "noUnusedParameters": true,
     "strict": true,
     "sourceMap": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
     "jsx": "react-jsx",
     "allowJs": true,
     "resolveJsonModule": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "typeRoots": ["node_modules/@types"]
   },
   "include": ["./src", "./types", "./config"],
   "compileOnSave": false
