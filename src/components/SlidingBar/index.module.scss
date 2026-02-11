@@ -1,0 +1,24 @@
+.wrapper {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.inner {
+  display: inline-flex;
+  align-items: center;
+}
+
+.item {
+  display: inline-block;
+  padding: 10rpx 30rpx;
+  font-size: 30rpx;
+  color: rgb(187, 187, 187);
+  background: transparent;
+  border: none;
+  transition: color 0.2s;
+}
+
+.itemActive {
+  color: #333;
+  font-weight: 600;
+}
