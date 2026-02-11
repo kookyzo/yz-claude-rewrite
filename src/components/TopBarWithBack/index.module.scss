@@ -1,0 +1,37 @@
+.wrapper {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+}
+
+.content {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 20rpx;
+  margin-bottom: 15rpx;
+}
+
+.backBtn {
+  position: absolute;
+  left: 16rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backIcon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.logo {
+  height: 100%;
+}
