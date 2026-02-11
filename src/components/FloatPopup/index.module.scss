@@ -1,0 +1,37 @@
+.container {
+  width: 100%;
+  background: #fff;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30rpx 0;
+  background: transparent;
+  border: none;
+  width: 100%;
+
+  &::after {
+    border: none;
+  }
+}
+
+.btnText {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.cancelText {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #999;
+}
+
+.divider {
+  height: 1rpx;
+  background: #eee;
+  width: 100%;
+}
