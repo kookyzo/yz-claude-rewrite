@@ -1,0 +1,138 @@
+.container {
+  padding: 30rpx;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.productInfo {
+  display: flex;
+  align-items: center;
+  padding-bottom: 30rpx;
+  gap: 20rpx;
+  border-bottom: 1rpx solid #eee;
+  margin-bottom: 30rpx;
+}
+
+.productImg {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 8rpx;
+}
+
+.productText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.productName {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.productNameEN {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  gap: 16rpx;
+}
+
+.ratingLabel {
+  font-size: 28rpx;
+  color: #333;
+  width: 140rpx;
+}
+
+.ratingText {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 8rpx;
+}
+
+.textareaWrap {
+  margin-top: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.charCount {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  text-align: right;
+  margin-top: 8rpx;
+}
+
+.imageList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 30rpx;
+}
+
+.imageItem {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+}
+
+.uploadedImg {
+  width: 100%;
+  height: 100%;
+  border-radius: 8rpx;
+}
+
+.removeBtn {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  width: 36rpx;
+  height: 36rpx;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 24rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.addImageBtn {
+  width: 160rpx;
+  height: 160rpx;
+  border: 1rpx dashed #ddd;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addIcon {
+  font-size: 48rpx;
+  color: #ccc;
+}
+
+.submitBtn {
+  width: 100%;
+  height: 88rpx;
+  background: #000;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20rpx;
+}
+
+.submitBtnText {
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 600;
+}
