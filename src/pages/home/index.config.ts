@@ -1,3 +1,6 @@
 export default definePageConfig({
-  navigationBarTitleText: 'Uhome',
+  navigationBarTitleText: '',
+  navigationStyle: 'custom',
+  enableShareAppMessage: true,
+  enableShareTimeline: true,
 })

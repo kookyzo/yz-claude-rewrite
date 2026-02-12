@@ -11,7 +11,7 @@ export default function FloatBtn({ onPress }: FloatBtnProps) {
     <View className={styles.wrapper} onClick={onPress}>
       <Image
         className={styles.icon}
-        src='/assets/icons/phone.png'
+        src='/assets/icons/phone.svg'
         mode='aspectFit'
       />
     </View>

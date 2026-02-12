@@ -6,7 +6,7 @@ import type { Sku, SubSeries, Category, Material } from '@/types/product'
 export function getProductDetail(skuId: string): Promise<CloudResponse<Sku>> {
   return callCloudFunction<Sku>('get-product', {
     action: 'getProductDetail',
-    _skuId: skuId,
+    data: { _skuId: skuId },
   })
 }
 
@@ -19,7 +19,7 @@ export function getProductsBySubSeries(params: {
 }): Promise<CloudResponse<PaginatedData<Sku>>> {
   return callCloudFunction<PaginatedData<Sku>>('get-product', {
     action: 'getProductsBySubSeries',
-    ...params,
+    data: params,
   })
 }
 
@@ -32,7 +32,7 @@ export function getProductsByCategory(params: {
 }): Promise<CloudResponse<PaginatedData<Sku>>> {
   return callCloudFunction<PaginatedData<Sku>>('get-product', {
     action: 'getProductsByCategory',
-    ...params,
+    data: params,
   })
 }
 
@@ -45,7 +45,7 @@ export function getProductsByMaterial(params: {
 }): Promise<CloudResponse<PaginatedData<Sku>>> {
   return callCloudFunction<PaginatedData<Sku>>('get-product', {
     action: 'getProductsByMaterial',
-    ...params,
+    data: params,
   })
 }
 
@@ -60,7 +60,7 @@ export function getProductsByFilter(params: {
 }): Promise<CloudResponse<PaginatedData<Sku>>> {
   return callCloudFunction<PaginatedData<Sku>>('get-product', {
     action: 'getProductsByFilter',
-    ...params,
+    data: params,
   })
 }
 
@@ -68,7 +68,7 @@ export function getProductsByFilter(params: {
 export function getModelShowData(skuIds: string[]): Promise<CloudResponse<Sku[]>> {
   return callCloudFunction<Sku[]>('get-product', {
     action: 'getModelShowData',
-    skuIds,
+    data: { skuIds },
   })
 }
 
@@ -76,7 +76,7 @@ export function getModelShowData(skuIds: string[]): Promise<CloudResponse<Sku[]>
 export function listSubSeries(filterEnabled?: boolean): Promise<CloudResponse<SubSeries[]>> {
   return callCloudFunction<SubSeries[]>('manage-subseries', {
     action: 'list',
-    filterEnabled,
+    data: { filterEnabled },
   })
 }
 

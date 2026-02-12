@@ -5,6 +5,6 @@ import type { CloudResponse } from '@/types/api'
 export function listBanners(): Promise<CloudResponse> {
   return callCloudFunction('manage-banner', {
     action: 'list',
-    filterEnabled: false,
+    data: { filterEnabled: false },
   })
 }
