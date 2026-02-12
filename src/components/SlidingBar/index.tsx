@@ -34,7 +34,6 @@ export default function SlidingBar({
       className={styles.wrapper}
       scrollX={scrollX}
       scrollY={scrollY}
-      enhanced
       showScrollbar={false}
     >
       <View className={styles.inner}>

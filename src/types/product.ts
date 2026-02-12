@@ -27,14 +27,18 @@ export interface Sku {
 export interface Material {
   _id: string;
   nameCN: string;
+  description?: string;
   materialImage: string;
   sortNum?: number;
   isEnabled?: boolean;
+  childMaterials?: Material[];
 }
 
 export interface SubSeries {
   _id: string;
+  subSeriesId?: string;
   name: string;
+  nameEN?: string;
   displayImage: string;
   introduction?: string;
   parentSeriesId?: string;
@@ -44,6 +48,8 @@ export interface SubSeries {
 
 export interface Category {
   _id: string;
+  categoryId?: string;
+  categoryName?: string;
   typeName: string;
   displayImage?: string;
   status?: boolean;

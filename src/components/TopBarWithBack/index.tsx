@@ -8,16 +8,13 @@ interface TopBarWithBackProps {
   imageSrc?: string
   /** 背景色，默认 'white' */
   backgroundColor?: string
-  /** 内容栏高度 (rpx)，默认 110 */
-  barHeight?: number
 }
 
 export default function TopBarWithBack({
   imageSrc = '/assets/icons/top.png',
   backgroundColor = 'white',
-  barHeight = 110,
 }: TopBarWithBackProps) {
-  const { statusBarHeight } = useSystemInfo()
+  const { statusBarHeight, navBarHeight } = useSystemInfo()
 
   const handleBack = () => {
     const pages = Taro.getCurrentPages()
@@ -38,7 +35,7 @@ export default function TopBarWithBack({
     >
       <View
         className={styles.content}
-        style={{ height: `${barHeight}rpx` }}
+        style={{ height: `${navBarHeight}px` }}
       >
         <View className={styles.backBtn} onClick={handleBack}>
           <Image
@@ -51,7 +48,7 @@ export default function TopBarWithBack({
           className={styles.logo}
           src={imageSrc}
           mode='heightFix'
-          style={{ height: `calc(${barHeight}rpx - 35rpx)` }}
+          style={{ height: `${navBarHeight - 8}px` }}
         />
       </View>
     </View>

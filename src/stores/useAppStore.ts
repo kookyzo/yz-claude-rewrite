@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import Taro from '@tarojs/taro'
+import { getNormalizedSystemInfo, getMenuButtonInfo } from '@/utils/systemInfo'
 
 const taroStorage = {
   getItem: (name: string) => Taro.getStorageSync(name) || null,
@@ -55,23 +56,16 @@ export const useAppStore = create<AppState>()(
       },
 
       initSystemInfo: () => {
-        const sysInfo = Taro.getSystemInfoSync()
-        const menuButtonRect = Taro.getMenuButtonBoundingClientRect()
-        const statusBarHeight = sysInfo.statusBarHeight ?? 0
-        const navBarHeight =
-          (menuButtonRect.top - statusBarHeight) * 2 + menuButtonRect.height
+        const sysInfo = getNormalizedSystemInfo()
+        const { menuButtonRect, hasValidRect } = getMenuButtonInfo()
+        const statusBarHeight = sysInfo.statusBarHeight
+        const topGap = Math.max(menuButtonRect.top - statusBarHeight, 0)
+        const navBarHeight = hasValidRect ? topGap * 2 + menuButtonRect.height : 44
 
         set({
           systemInfo: {
             statusBarHeight,
-            menuButtonRect: {
-              top: menuButtonRect.top,
-              bottom: menuButtonRect.bottom,
-              left: menuButtonRect.left,
-              right: menuButtonRect.right,
-              width: menuButtonRect.width,
-              height: menuButtonRect.height,
-            },
+            menuButtonRect,
             navBarHeight,
             screenWidth: sysInfo.screenWidth,
             screenHeight: sysInfo.screenHeight,

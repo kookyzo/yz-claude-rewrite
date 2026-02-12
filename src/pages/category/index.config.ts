@@ -1,3 +1,5 @@
 export default definePageConfig({
-  navigationBarTitleText: 'Ucategory',
+  navigationStyle: 'custom',
+  enableShareAppMessage: true,
+  enableShareTimeline: true,
 })

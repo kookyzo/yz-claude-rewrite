@@ -25,7 +25,7 @@ import {
   getModelShowData,
 } from "@/services/product.service";
 import { formatPrice } from "@/utils/format";
-import TopBar from "@/components/TopBar";
+import TopBar, { TOP_BAR_BOTTOM_PADDING_RPX } from "@/components/TopBar";
 import SlidingBar from "@/components/SlidingBar";
 import FloatBtn from "@/components/FloatBtn";
 import FloatPopup from "@/components/FloatPopup";
@@ -75,11 +75,13 @@ const MODEL_SKU_IDS = [
 
 const AUTOPLAY_INTERVAL = 3000;
 const RESUME_DELAY = 3000;
+const SERIES_SWIPER_SELECTOR = "#home-series-swiper";
+const MODEL_SWIPER_SELECTOR = "#home-model-swiper";
 
 export default function Home() {
   // ===== Hooks =====
   const { backgroundColor } = useNavBarScroll();
-  const { statusBarHeight, screenWidth } = useSystemInfo();
+  const { statusBarHeight, navBarHeight, screenWidth } = useSystemInfo();
   const { processImages } = useImageProcessor();
   const setCurrentTab = useAppStore((s) => s.setCurrentTab);
 
@@ -127,9 +129,8 @@ export default function Home() {
   // ===== Layout Calculation =====
   const calculateLayout = useCallback(() => {
     const rpxRatio = 750 / screenWidth;
-    const barHeight = 110; // rpx
-    const statusBarHeightRpx = statusBarHeight * rpxRatio;
-    const topBarTotalHeight = barHeight + statusBarHeightRpx;
+    const topBarTotalHeight =
+      (statusBarHeight + navBarHeight) * rpxRatio + TOP_BAR_BOTTOM_PADDING_RPX;
 
     const windowInfo = Taro.getWindowInfo();
     const windowHeightRpx = windowInfo.windowHeight * rpxRatio;
@@ -137,7 +138,7 @@ export default function Home() {
 
     setSwiperContainerTop(topBarTotalHeight + "rpx");
     setSwiperContainerHeight(swiperHeight + "rpx");
-  }, [statusBarHeight, screenWidth]);
+  }, [statusBarHeight, navBarHeight, screenWidth]);
 
   // ===== Data Loading =====
   const loadBannersData = useCallback(async () => {
@@ -472,43 +473,65 @@ export default function Home() {
   // ===== IntersectionObserver Setup =====
   const setupSeriesObserver = useCallback(() => {
     const page = Taro.getCurrentInstance().page;
-    if (!page) return;
-    seriesObserverRef.current = Taro.createIntersectionObserver(page, {
-      thresholds: [0.5],
+    if (!page || seriesObserverRef.current) return;
+
+    const query = Taro.createSelectorQuery();
+    query.select(SERIES_SWIPER_SELECTOR).boundingClientRect();
+    query.exec((nodes) => {
+      if (!nodes?.[0] || seriesObserverRef.current) return;
+
+      try {
+        seriesObserverRef.current = Taro.createIntersectionObserver(page, {
+          thresholds: [0.5],
+        });
+        seriesObserverRef.current
+          .relativeToViewport()
+          .observe(SERIES_SWIPER_SELECTOR, (res) => {
+            const inView = (res.intersectionRatio ?? 0) >= 0.5;
+            if (inView && !seriesInViewportRef.current) {
+              seriesInViewportRef.current = true;
+              if (!seriesIsTouchingRef.current) startSeriesAutoplay();
+            } else if (!inView && seriesInViewportRef.current) {
+              seriesInViewportRef.current = false;
+              stopSeriesAutoplay();
+            }
+          });
+      } catch (err) {
+        console.warn("setupSeriesObserver failed", err);
+      }
     });
-    seriesObserverRef.current
-      .relativeToViewport()
-      .observe(`.${styles.seriesSwiper}`, (res) => {
-        const inView = (res.intersectionRatio ?? 0) >= 0.5;
-        if (inView && !seriesInViewportRef.current) {
-          seriesInViewportRef.current = true;
-          if (!seriesIsTouchingRef.current) startSeriesAutoplay();
-        } else if (!inView && seriesInViewportRef.current) {
-          seriesInViewportRef.current = false;
-          stopSeriesAutoplay();
-        }
-      });
   }, [startSeriesAutoplay, stopSeriesAutoplay]);
 
   const setupModelObserver = useCallback(() => {
     if (modelObserverRef.current) return;
     const page = Taro.getCurrentInstance().page;
     if (!page) return;
-    modelObserverRef.current = Taro.createIntersectionObserver(page, {
-      thresholds: [0.5],
+
+    const query = Taro.createSelectorQuery();
+    query.select(MODEL_SWIPER_SELECTOR).boundingClientRect();
+    query.exec((nodes) => {
+      if (!nodes?.[0] || modelObserverRef.current) return;
+
+      try {
+        modelObserverRef.current = Taro.createIntersectionObserver(page, {
+          thresholds: [0.5],
+        });
+        modelObserverRef.current
+          .relativeToViewport()
+          .observe(MODEL_SWIPER_SELECTOR, (res) => {
+            const inView = (res.intersectionRatio ?? 0) >= 0.5;
+            if (inView && !modelInViewportRef.current) {
+              modelInViewportRef.current = true;
+              if (!modelIsTouchingRef.current) startModelAutoplay();
+            } else if (!inView && modelInViewportRef.current) {
+              modelInViewportRef.current = false;
+              stopModelAutoplay();
+            }
+          });
+      } catch (err) {
+        console.warn("setupModelObserver failed", err);
+      }
     });
-    modelObserverRef.current
-      .relativeToViewport()
-      .observe(`.${styles.modelSwiper}`, (res) => {
-        const inView = (res.intersectionRatio ?? 0) >= 0.5;
-        if (inView && !modelInViewportRef.current) {
-          modelInViewportRef.current = true;
-          if (!modelIsTouchingRef.current) startModelAutoplay();
-        } else if (!inView && modelInViewportRef.current) {
-          modelInViewportRef.current = false;
-          stopModelAutoplay();
-        }
-      });
   }, [startModelAutoplay, stopModelAutoplay]);
 
   const clearAllTimersAndObservers = useCallback(() => {
@@ -704,6 +727,7 @@ export default function Home() {
           />
 
           <Swiper
+            id="home-series-swiper"
             className={styles.seriesSwiper}
             current={currentSeriesIndex}
             onChange={onSeriesSwiperChange}
@@ -781,6 +805,7 @@ export default function Home() {
             />
 
             <Swiper
+              id="home-model-swiper"
               className={styles.modelSwiper}
               current={currentModelIndex}
               onChange={onModelSwiperChange}

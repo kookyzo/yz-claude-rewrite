@@ -91,7 +91,7 @@ export function listCategories(): Promise<CloudResponse<Category[]>> {
 export function listMaterials(filterEnabled?: boolean): Promise<CloudResponse<Material[]>> {
   return callCloudFunction<Material[]>('manage-material', {
     action: 'list',
-    filterEnabled,
+    data: { filterEnabled },
   })
 }
 

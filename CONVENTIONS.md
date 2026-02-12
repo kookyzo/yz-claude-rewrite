@@ -83,16 +83,31 @@ export default function Xxx({ ...props }: XxxProps) {
 
 ## Service 调用模式
 
+**关键：业务参数必须包在 `data` 字段下**，因为所有云函数入口都是 `const { action, data } = event`。
+
 ```tsx
 import { callCloudFunction } from '@/services/cloud'
-// 在 service 文件中：
+// ✅ 正确：业务参数包在 data 下
 export async function doSomething(params: Params) {
   return callCloudFunction<ResultType>('cloud-function-name', {
     action: 'actionName',
     data: params,
   })
 }
+// ❌ 错误：参数平铺在顶层，云函数解构后 data 为 undefined
+export async function doSomething(params: Params) {
+  return callCloudFunction<ResultType>('cloud-function-name', {
+    action: 'actionName',
+    ...params,
+  })
+}
 ```
+
+## 已知配置要点
+
+- `@/` 路径别名需要同时配置 tsconfig.json 和 config/index.ts（`alias: { '@': path.resolve(__dirname, '..', 'src') }`）
+- 静态资源需在 config/index.ts 的 `copy.patterns` 中配置复制规则
+- 从 legacy 复制的图标放在 `src/assets/icons/`，构建时自动复制到 dist
 
 ## 路径别名
 
