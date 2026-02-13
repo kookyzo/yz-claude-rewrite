@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: 'Upayment',
+  navigationStyle: 'custom',
 })

@@ -31,8 +31,8 @@ const PAGE_SIZE = 200;
 
 const SORT_TEXT_MAP: Record<string, string> = {
   default: "默认排序",
-  price_asc: "价格从低到高",
-  price_desc: "价格从高到低",
+  price_asc: "价格↑",
+  price_desc: "价格↓",
 };
 
 const MATERIAL_GROUPS = [
@@ -1071,10 +1071,13 @@ export default function Category() {
                         }`}
                         onClick={() => handleSelectSort(sort)}
                       >
-                        {currentSort === sort && (
-                          <Text className={styles.sortCheckMark}>✓</Text>
-                        )}
-                        <Text>{SORT_TEXT_MAP[sort]}</Text>
+                        <Text>
+                          {sort === "default"
+                            ? "默认排序"
+                            : sort === "price_asc"
+                              ? "价格从低到高"
+                              : "价格从高到低"}
+                        </Text>
                       </View>
                     ),
                   )}

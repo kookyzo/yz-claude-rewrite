@@ -651,7 +651,7 @@ export default function Home() {
 
   const goToSeriesDetail = useCallback((id: string) => {
     if (!id) return;
-    Taro.navigateTo({ url: `/pages/series-detail/index?subSeriesId=${id}` });
+    Taro.navigateTo({ url: `/pages-sub/series-detail/index?subSeriesId=${id}` });
   }, []);
 
   const goToProductDetail = useCallback((skuId: string) => {

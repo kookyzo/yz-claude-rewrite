@@ -16,6 +16,7 @@ export function getProductsBySubSeries(params: {
   sortBy?: string
   page?: number
   pageSize?: number
+  materialIds?: string[]
 }): Promise<CloudResponse<PaginatedData<Sku>>> {
   return callCloudFunction<PaginatedData<Sku>>('get-product', {
     action: 'getProductsBySubSeries',
@@ -72,6 +73,14 @@ export function getModelShowData(skuIds: string[]): Promise<CloudResponse<Sku[]>
   })
 }
 
+/** 获取单个子系列信息 */
+export function getSubSeriesInfo(subSeriesId: string): Promise<CloudResponse<{ subSeries: SubSeries }>> {
+  return callCloudFunction<{ subSeries: SubSeries }>('manage-subseries', {
+    action: 'get',
+    data: { id: subSeriesId },
+  })
+}
+
 /** 获取子系列列表 */
 export function listSubSeries(filterEnabled?: boolean): Promise<CloudResponse<SubSeries[]>> {
   return callCloudFunction<SubSeries[]>('manage-subseries', {
@@ -92,6 +101,14 @@ export function listMaterials(filterEnabled?: boolean): Promise<CloudResponse<Ma
   return callCloudFunction<Material[]>('manage-material', {
     action: 'list',
     data: { filterEnabled },
+  })
+}
+
+/** 根据 ID 列表获取材质信息 */
+export function listMaterialsByIds(ids: string[]): Promise<CloudResponse<{ materials: Material[] }>> {
+  return callCloudFunction<{ materials: Material[] }>('manage-material', {
+    action: 'listByIds',
+    data: { ids },
   })
 }
 
