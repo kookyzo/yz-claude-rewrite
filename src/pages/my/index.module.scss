@@ -1,3 +1,225 @@
 .container {
-  min-height: 100vh;
+  font-family: "PINGFANG SC";
+}
+
+/* 顶部图片区域 */
+.topImageContainer {
+  position: relative;
+  height: 400rpx;
+}
+
+.topImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userName {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcomeText {
+  white-space: nowrap;
+  margin-bottom: 10rpx;
+  font-size: 30rpx;
+}
+
+.greetingText {
+  white-space: nowrap;
+  font-size: 38rpx;
+  font-weight: 500;
+}
+
+/* 主内容区域 */
+.mainContentContainer {
+  width: 95%;
+  margin: 0 auto;
+  margin-top: -60rpx;
+  background-color: #ffffff;
+  border-radius: 30rpx 30rpx 0 0;
+  padding-top: 20rpx;
+  padding-bottom: 40rpx;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 340rpx);
+}
+
+/* 功能入口区域 */
+.functionEntryArea {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20rpx;
+  padding: 10rpx 10rpx 40rpx 10rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.functionItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.iconWrapper {
+  position: relative;
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.functionIcon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-bottom: 12rpx;
+}
+
+.functionText {
+  font-size: 22rpx;
+  color: #000000;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* 心愿单角标 */
+.badge {
+  position: absolute;
+  top: -10rpx;
+  right: -16rpx;
+  min-width: 28rpx;
+  height: 28rpx;
+  background-color: #ff4d4f;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6rpx;
+}
+
+.badgeText {
+  font-size: 18rpx;
+  color: #ffffff;
+  line-height: 1;
+}
+
+/* 可滚动内容区域 */
+.scrollableContent {
+  flex: 1;
+  height: 0;
+}
+
+/* 客户服务区域 */
+.customerServiceArea {
+  padding: 20rpx 30rpx;
+  text-align: center;
+  background-color: #ffffff;
+  margin-bottom: 6rpx;
+}
+
+.serviceTitle {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 30rpx;
+  letter-spacing: 2rpx;
+}
+
+.contactBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0 20rpx 0;
+  line-height: normal;
+  font-size: inherit;
+
+  &::after {
+    border: none;
+  }
+}
+
+.linkText {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: rgb(0, 0, 0);
+  border-bottom: 1rpx solid #333333;
+  padding-bottom: 4rpx;
+}
+
+.serviceTime {
+  display: block;
+  font-size: 20rpx;
+  color: #999999;
+  font-weight: 400;
+  margin-top: 10rpx;
+}
+
+/* 微信二维码区域 */
+.wechatQrArea {
+  padding: 20rpx 30rpx;
+  text-align: center;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qrCodeImage {
+  width: 220rpx;
+  height: 220rpx;
+  margin-bottom: 30rpx;
+  background-color: #f5f5f5;
+}
+
+.qrTitle {
+  font-size: 28rpx;
+  font-weight: 550;
+  color: #333333;
+  margin-bottom: 10rpx;
+}
+
+.qrDesc {
+  font-size: 20rpx;
+  color: rgb(0, 0, 0);
+  font-weight: 600;
+  margin-bottom: 30rpx;
+}
+
+.policyLinks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+}
+
+.policyText {
+  font-size: 20rpx;
+  color: #999999;
+}
+
+.policyLink {
+  font-size: 20rpx;
+  color: #666666;
+  text-decoration: underline;
+}
+
+/* 账号注销信息 */
+.accountDeleteInfo {
+  text-align: center;
+  background-color: #ffffff;
+}
+
+.deleteText {
+  font-size: 20rpx;
+  color: #cccccc;
 }
