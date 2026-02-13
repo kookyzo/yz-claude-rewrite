@@ -10,6 +10,7 @@ import TopBar from '@/components/TopBar'
 import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import LoadingBar from '@/components/LoadingBar'
+import CustomTabBar from '@/custom-tab-bar'
 import styles from './index.module.scss'
 
 export default function Cart() {
@@ -233,6 +234,8 @@ export default function Cart() {
 
       <FloatBtn onPress={() => setIsPopupShow(true)} />
       <FloatPopup visible={isPopupShow} onClose={() => setIsPopupShow(false)} />
+
+      <CustomTabBar />
     </View>
   )
 }

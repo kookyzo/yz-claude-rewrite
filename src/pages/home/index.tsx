@@ -30,6 +30,7 @@ import SlidingBar from "@/components/SlidingBar";
 import FloatBtn from "@/components/FloatBtn";
 import FloatPopup from "@/components/FloatPopup";
 import LoadingBar from "@/components/LoadingBar";
+import CustomTabBar from "@/custom-tab-bar";
 import type { Sku } from "@/types/product";
 import styles from "./index.module.scss";
 
@@ -866,6 +867,8 @@ export default function Home() {
 
       {/* Loading indicator */}
       <LoadingBar visible={showLoading} />
+
+      <CustomTabBar />
     </View>
   );
 }

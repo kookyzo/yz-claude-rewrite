@@ -11,6 +11,7 @@ import TopBar, { TOP_BAR_BOTTOM_PADDING_RPX } from "@/components/TopBar";
 import FloatBtn from "@/components/FloatBtn";
 import FloatPopup from "@/components/FloatPopup";
 import LoadingBar from "@/components/LoadingBar";
+import CustomTabBar from "@/custom-tab-bar";
 import styles from "./index.module.scss";
 
 const TOP_BAR_CONTENT_MARGIN_TOP_RPX = 20;
@@ -268,6 +269,7 @@ export default function My() {
           visible={isPopupShow}
           onClose={() => setIsPopupShow(false)}
         />
+        <CustomTabBar />
       </View>
     </>
   );

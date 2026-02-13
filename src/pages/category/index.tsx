@@ -18,6 +18,7 @@ import TopBar, { TOP_BAR_BOTTOM_PADDING_RPX } from "@/components/TopBar";
 import FloatBtn from "@/components/FloatBtn";
 import FloatPopup from "@/components/FloatPopup";
 import LoadingBar from "@/components/LoadingBar";
+import CustomTabBar from "@/custom-tab-bar";
 import styles from "./index.module.scss";
 
 // ===== Constants =====
@@ -1212,6 +1213,8 @@ export default function Category() {
         visible={showLoading}
         onFinish={() => setShowLoading(false)}
       />
+
+      <CustomTabBar />
     </View>
   );
 }
