@@ -1,3 +1,156 @@
 .container {
   min-height: 100vh;
+  font-family: 'PINGFANG SC';
+}
+
+/* 表单容器 */
+.enterInfoContainer {
+  display: flex;
+  flex-direction: column;
+  margin-left: 30rpx;
+  margin-right: 60rpx;
+  margin-top: 30rpx;
+}
+
+/* 必填提示 */
+.requiredField {
+  margin-left: 600rpx;
+  white-space: nowrap;
+  font-size: 25rpx;
+  color: rgb(104, 104, 104);
+}
+
+.enterInfoForm {
+  width: 100%;
+}
+
+.formItem {
+  width: 100%;
+  margin-bottom: 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 统一输入框样式 */
+.inputContainer {
+  border: 2rpx solid black;
+  color: #929191;
+  width: 100%;
+  height: 80rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+/* 错误态 */
+.notCorrect {
+  border: 2rpx solid #CE1616 !important;
+  color: #CE1616;
+}
+
+/* 地区容器 */
+.regionContainer {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  width: 100%;
+}
+
+/* Picker 样式 */
+.regionPicker {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  width: auto !important;
+}
+
+.pickerView {
+  padding: 0 20rpx;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 28rpx;
+  color: #929191;
+  min-height: 80rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  max-width: 100%;
+  word-break: keep-all;
+  flex-shrink: 1;
+}
+
+/* 一键定位按钮 */
+.locationBtn {
+  width: 180rpx !important;
+  min-width: 0 !important;
+  height: 80rpx;
+  line-height: 80rpx;
+  padding: 0 !important;
+  margin: 0;
+  font-size: 22rpx;
+  background-color: #000;
+  color: #fff;
+  border-radius: 0;
+  flex-shrink: 0;
+  text-align: center;
+  border: none;
+}
+
+.locationBtn::after {
+  border: none;
+}
+
+/* 设为默认 + 保存 */
+.setDefaultBtn {
+  display: flex;
+  flex-direction: column;
+  margin-top: 60rpx;
+}
+
+.setDefault {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.setDefaultCheckBox {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 20rpx;
+  margin-bottom: 6rpx;
+}
+
+.checkBoxImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.otherText {
+  font-size: 22rpx;
+  font-weight: 300;
+  color: rgb(70, 70, 70);
+}
+
+.saveBtn {
+  width: 105%;
+  margin-top: 30rpx;
+  margin-bottom: 50rpx;
+  background-color: rgb(0, 0, 0);
+  border-radius: 0;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 28rpx;
 }

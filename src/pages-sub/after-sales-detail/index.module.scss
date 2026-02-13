@@ -1,3 +1,104 @@
-.container {
+.page {
   min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.container {
+  padding: 40rpx;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 主标题：保养情节 */
+.mainTitle {
+  text-align: center;
+  margin-bottom: 60rpx;
+  margin-top: 20rpx;
+}
+
+.mainTitleText {
+  font-size: 36rpx;
+  color: #111111;
+  font-weight: 500;
+}
+
+/* 服务项目 */
+.serviceItems {
+  margin-top: 40rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.serviceItem {
+  border-bottom: 1rpx solid #f0f0f0;
+  padding: 30rpx 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.serviceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.serviceTitle {
+  font-size: 32rpx;
+  color: #000000;
+  font-weight: 600;
+}
+
+.serviceArrow {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+  transition: transform 0.3s;
+  border: none;
+  border-left: 4rpx solid #333;
+  border-bottom: 4rpx solid #333;
+  transform: rotate(-45deg);
+  box-sizing: border-box;
+}
+
+.serviceArrowExpanded {
+  transform: rotate(135deg);
+}
+
+.serviceContent {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0;
+}
+
+.serviceContentExpanded {
+  max-height: 500rpx;
+  padding-top: 20rpx;
+}
+
+.contentText {
+  font-size: 25rpx;
+  color: rgb(75, 75, 75);
+  line-height: 1.8;
+}
+
+/* 底部文字 */
+.footerText {
+  width: 100%;
+  text-align: center;
+  margin-top: 80rpx;
+  margin-bottom: 40rpx;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.footerLine {
+  font-size: 25rpx;
+  color: rgb(75, 75, 75);
+  line-height: 1.8;
+  margin-bottom: 10rpx;
+  text-align: center;
+}
+
+.serviceLinkText {
+  text-decoration: underline;
+  color: rgb(75, 75, 75);
 }

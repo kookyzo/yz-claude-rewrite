@@ -1,3 +1,310 @@
-.container {
+/* 注册页 — 1:1 还原 legacy register.wxss */
+
+.registerContainer {
   min-height: 100vh;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+  font-family: 'PINGFANG SC';
+}
+
+.registerContent {
+  flex: 1;
+  padding: 28rpx;
+  padding-bottom: 40rpx;
+}
+
+/* Section Title */
+.sectionTitle {
+  text-align: center;
+  margin-bottom: 36rpx;
+  margin-top: 36rpx;
+}
+
+.sectionTitleText {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #111111;
+}
+
+/* 姓名行（两列布局） */
+.nameRow {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 48rpx;
+}
+
+.nameItem {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 表单标签 */
+.formLabel {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111111;
+  margin-bottom: 16rpx;
+}
+
+/* 输入框包装器 */
+.inputWrapper {
+  position: relative;
+  width: 80%;
+  height: 96rpx;
+  background-color: rgb(210, 210, 210);
+  display: flex;
+  align-items: center;
+  padding: 0 32rpx;
+  box-sizing: border-box;
+
+  &.error {
+    border: 2rpx solid #ff0000;
+  }
+}
+
+.formInput {
+  flex: 1;
+  font-size: 28rpx;
+  color: #111111;
+  background: transparent;
+}
+
+.requiredStar {
+  position: absolute;
+  left: 14rpx;
+  color: #000000;
+  font-size: 28rpx;
+}
+
+/* 称谓选择 */
+.genderSection {
+  margin-bottom: 64rpx;
+}
+
+.genderSectionRow {
+  display: flex;
+  align-items: center;
+  gap: 40rpx;
+}
+
+.genderLabelInline {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.genderOptions {
+  display: flex;
+  gap: 100rpx;
+  margin-top: 0;
+}
+
+.genderOption {
+  display: flex;
+  align-items: center;
+}
+
+.genderCheckbox {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.genderCheckboxIcon {
+  width: 100%;
+  height: 100%;
+}
+
+.genderLabel {
+  font-size: 28rpx;
+  color: #111111;
+}
+
+/* 电话输入 */
+.phoneSection {
+  margin-bottom: 48rpx;
+}
+
+.phoneInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 96rpx;
+  background-color: rgb(210, 210, 210);
+  padding: 0 32rpx;
+  margin-top: 16rpx;
+  box-sizing: border-box;
+
+  &.error {
+    border: 2rpx solid #ff0000;
+  }
+}
+
+.phoneInput {
+  flex: 1;
+  font-size: 28rpx;
+  color: #111111;
+  background: transparent;
+  margin-left: 8rpx;
+}
+
+.getPhoneBtn {
+  padding: 0 !important;
+  background-color: transparent !important;
+  color: #606061 !important;
+  font-size: 24rpx !important;
+  font-weight: normal !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin-left: 16rpx;
+  text-decoration: underline;
+  line-height: 1.2 !important;
+
+  &::after {
+    border: none !important;
+  }
+}
+
+/* 生日选择 */
+.birthdaySection {
+  margin-bottom: 96rpx;
+}
+
+.birthdayPicker {
+  margin-top: 16rpx;
+  width: 100%;
+
+  &.error .pickerDisplay {
+    border: 2rpx solid #ff0000;
+  }
+}
+
+.pickerDisplay {
+  width: 100%;
+  height: 96rpx;
+  background-color: rgb(210, 210, 210);
+  display: flex;
+  align-items: center;
+  padding: 0 32rpx;
+  justify-content: space-between;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.pickerRequiredStar {
+  position: absolute;
+  left: 18rpx;
+  color: #000000;
+  font-size: 28rpx;
+}
+
+.pickerText {
+  flex: 1;
+  font-size: 28rpx;
+  color: #111111;
+  margin-left: 8rpx;
+}
+
+.pickerPlaceholder {
+  flex: 1;
+  font-size: 28rpx;
+  color: #999999;
+  margin-left: 8rpx;
+}
+
+.pickerArrow {
+  font-size: 32rpx;
+  color: #999999;
+  transform: rotate(180deg);
+}
+
+/* 条款列表 */
+.agreementsSection {
+  margin-bottom: 40rpx;
+}
+
+.agreementItem {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+.agreementCheckbox {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 24rpx;
+  margin-top: 4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.agreementCheckboxIcon {
+  width: 100%;
+  height: 100%;
+}
+
+.agreementText {
+  flex: 1;
+  font-size: 24rpx;
+  color: rgb(32, 32, 32);
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+.requiredText {
+  color: #000000;
+  margin-left: 8rpx;
+}
+
+/* 全选 */
+.selectAllItem {
+  display: flex;
+  align-items: center;
+  margin-top: 48rpx;
+}
+
+.selectAllText {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #000000;
+}
+
+/* 底部按钮 */
+.submitBtn {
+  width: calc(100% - 56rpx);
+  margin: 0 28rpx;
+  margin-bottom: calc(env(safe-area-inset-bottom));
+  min-width: 600rpx;
+  height: 96rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  border-radius: 0;
+  border: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+
+  &::after {
+    border: none;
+  }
+
+  &.enabled {
+    background-color: #111111;
+    color: #ffffff;
+  }
+
+  &.disabled {
+    background-color: #333333;
+    color: #ffffff;
+  }
 }

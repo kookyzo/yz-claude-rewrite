@@ -1,3 +1,5 @@
 export default definePageConfig({
-  navigationBarTitleText: 'UreservationUeasy',
+  navigationStyle: 'custom',
+  navigationBarTitleText: '预约',
+  enableShareAppMessage: true,
 })

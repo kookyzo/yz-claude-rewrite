@@ -1,3 +1,259 @@
-.container {
-  min-height: 100vh;
+/* 编辑个人信息页 — 1:1 还原 legacy edit_information.wxss */
+
+.splashContainer {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  font-family: 'PINGFANG SC';
+}
+
+/* 背景 */
+.splashImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 遮罩层 */
+.formPopupMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+/* 弹窗主体 */
+.formPopup {
+  height: 80%;
+  width: 85%;
+  max-width: 500px;
+  background: #fff;
+  padding: 20rpx;
+  border-radius: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+/* 关闭按钮 */
+.closeBtn {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  color: #666;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  z-index: 1001;
+}
+
+/* Logo */
+.logo {
+  height: 160rpx;
+  width: 150rpx;
+  margin-top: 40rpx;
+  margin-bottom: 40rpx;
+}
+
+.logoImage {
+  width: 100%;
+  height: 300%;
+  object-fit: cover;
+}
+
+/* 性别选择 */
+.sexSelection {
+  display: flex;
+  width: 100%;
+}
+
+.item {
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  border-bottom: 2rpx solid rgb(196, 196, 196);
+  white-space: nowrap;
+  margin-top: 40rpx;
+  margin-bottom: 50rpx;
+}
+
+.leftItem {
+  border-right: 2rpx solid black;
+  padding-right: 60rpx;
+}
+
+.rightItem {
+  padding-left: 60rpx;
+}
+
+.sex {
+  display: flex;
+  width: 90%;
+  margin-left: 5%;
+  align-items: center;
+  text-align: center;
+}
+
+.sexCheckBox {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 20rpx;
+  margin-bottom: 6rpx;
+}
+
+.sexCheckBoxImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemText {
+  margin-left: 20rpx;
+}
+
+/* 必填项提示 */
+.requiredField {
+  margin-left: 450rpx;
+  font-size: 25rpx;
+  color: rgb(104, 104, 104);
+}
+
+/* 表单项 */
+.formItem {
+  width: 600rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.formItemLabel {
+  font-size: 28rpx;
+  margin-bottom: 10rpx;
+}
+
+.inputContainer {
+  border: 2rpx solid black;
+  color: #929191;
+  padding: 15rpx;
+  background: #f5f5f5;
+  border-radius: 6rpx;
+
+  &.notCorrect {
+    border: 2rpx solid rgb(206, 22, 22);
+    color: rgb(206, 22, 22);
+  }
+}
+
+.pickerView {
+  padding: 15rpx;
+  background: #f5f5f5;
+  border-radius: 6rpx;
+}
+
+/* 前往编辑地址 */
+.formItemEditAddress {
+  height: 65rpx;
+  background-color: white;
+  color: #000;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  border: 2rpx solid black;
+}
+
+/* 产品复选框（性别选择用） */
+.productCheckbox {
+  margin-left: 2%;
+  width: 70rpx;
+  height: 50rpx;
+}
+
+.productCheckboxImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 授权、按钮 */
+.authBtn {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 20rpx;
+}
+
+.auth {
+  display: flex;
+  width: 100%;
+  margin-left: 5%;
+  align-items: center;
+  text-align: center;
+}
+
+.authCheckBox {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 20rpx;
+  margin-bottom: 6rpx;
+}
+
+.authCheckBoxImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.otherText {
+  font-size: 21rpx;
+  font-weight: 300;
+  color: rgb(70, 70, 70);
+}
+
+.privacyPolicy {
+  font-size: 23rpx;
+  font-weight: 500;
+  color: #000;
+}
+
+.userAgreement {
+  font-size: 23rpx;
+  font-weight: 500;
+  color: #000;
+}
+
+.submitBtn {
+  width: 100%;
+  margin-top: 30rpx;
+  background-color: black;
+  margin-bottom: 50rpx;
+}
+
+.submitBtnInner {
+  background-color: black !important;
+  color: rgb(255, 255, 255) !important;
+  border-radius: 0 !important;
+
+  &::after {
+    border: none !important;
+  }
 }

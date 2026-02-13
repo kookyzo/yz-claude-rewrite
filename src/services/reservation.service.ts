@@ -50,3 +50,14 @@ export function updateReservation(data: {
     ...data,
   })
 }
+
+/** 生成预约二维码 */
+export function generateQRCode(
+  content: string,
+  type: string,
+): Promise<CloudResponse<{ fileId?: string; qrCodeUrl?: string }>> {
+  return callCloudFunction<{ fileId?: string; qrCodeUrl?: string }>(
+    'generate-qrcode',
+    { content, type },
+  )
+}
