@@ -110,7 +110,8 @@ TopBar（白色背景）
 │   │   └── 隐私政策（跳转隐私政策）
 │   └── 账号注销说明文字
 ├── FloatBtn（浮动咨询按钮）
-└── FloatPopup（在线咨询弹窗）
+├── FloatPopup（在线咨询弹窗）
+└── CustomTabBar（自定义底部导航栏）
 ```
 
 ### 数据流
@@ -140,7 +141,7 @@ useDidShow
 
 - 用户状态读取通过 `useUserStore`，心愿单数量通过 `wishService.listWishes` 直接调用
 - 使用已有的 hooks：useAuth
-- 使用已有的组件：TopBar、FloatBtn、FloatPopup、LoadingBar
+- 使用已有的组件：TopBar、FloatBtn、FloatPopup、LoadingBar、CustomTabBar（`import CustomTabBar from '@/custom-tab-bar'`，放在页面 JSX 最外层末尾）
 - 使用已有的 utils：navigateTo / switchTab（from `@/utils/navigation`）
 - `useDidShow` 中设置 `useAppStore.getState().setCurrentTab(3)`
 - 页面配置使用 `navigationStyle: 'custom'` 配合 TopBar 组件

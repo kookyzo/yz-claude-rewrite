@@ -1,3 +1,4 @@
 export default definePageConfig({
-  navigationBarTitleText: 'UproductUdetail',
+  navigationStyle: 'custom',
+  enableShareAppMessage: true,
 })

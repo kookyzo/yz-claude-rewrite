@@ -99,7 +99,6 @@ export function listMaterials(filterEnabled?: boolean): Promise<CloudResponse<Ma
 export function getRecommendations(skuId: string): Promise<CloudResponse<Sku[]>> {
   return callCloudFunction<Sku[]>('manage-recommendations', {
     action: 'getRecommendations',
-    skuId,
-    limit: 3,
+    data: { skuId, limit: 3 },
   })
 }
