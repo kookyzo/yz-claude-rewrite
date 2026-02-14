@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: 'UreservationUsuccess',
+  navigationStyle: 'custom',
 })

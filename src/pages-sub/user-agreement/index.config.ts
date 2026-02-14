@@ -1,3 +1,4 @@
 export default definePageConfig({
-  navigationBarTitleText: 'UuserUagreement',
+  navigationStyle: 'custom',
+  navigationBarTitleText: '',
 })

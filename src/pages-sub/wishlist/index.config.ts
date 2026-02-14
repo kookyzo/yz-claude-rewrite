@@ -1,3 +1,4 @@
 export default definePageConfig({
-  navigationBarTitleText: 'Uwishlist',
+  navigationStyle: 'custom',
+  navigationBarTitleText: '',
 })

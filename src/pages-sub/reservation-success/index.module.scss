@@ -1,3 +1,210 @@
+/* 页面容器 */
 .container {
   min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 成功内容区 */
+.successContainer {
+  padding: 40rpx 30rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 成功标题 */
+.successTitle {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+/* 成功描述 */
+.successDesc {
+  font-size: 28rpx;
+  color: #7f8c8d;
+  text-align: center;
+  margin-bottom: 40rpx;
+  line-height: 1.5;
+}
+
+/* 预约信息卡片 */
+.reservationCard {
+  width: 100%;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.cardTitle {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 30rpx;
+  text-align: center;
+  border-bottom: 2rpx solid #ecf0f1;
+  padding-bottom: 20rpx;
+}
+
+.infoItem {
+  display: flex;
+  margin-bottom: 20rpx;
+  align-items: flex-start;
+}
+
+.infoLabel {
+  font-size: 28rpx;
+  color: #7f8c8d;
+  width: 160rpx;
+  flex-shrink: 0;
+}
+
+.infoValue {
+  font-size: 28rpx;
+  color: #2c3e50;
+  flex: 1;
+  word-break: break-all;
+}
+
+/* 二维码区域 */
+.qrCodeSection {
+  width: 100%;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.qrTitle {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+
+.qrLoading {
+  padding: 60rpx;
+  text-align: center;
+  color: #7f8c8d;
+  font-size: 28rpx;
+}
+
+.qrCodeContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qrCodeWrapper {
+  width: 400rpx;
+  height: 400rpx;
+  background: #f8f9fa;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30rpx;
+  border: 4rpx solid #e9ecef;
+}
+
+.qrCodeImage {
+  width: 360rpx;
+  height: 360rpx;
+}
+
+.qrCodePlaceholder {
+  text-align: center;
+  color: #7f8c8d;
+  font-size: 28rpx;
+}
+
+.qrDesc {
+  text-align: center;
+  margin-bottom: 30rpx;
+  font-size: 26rpx;
+  color: #7f8c8d;
+  line-height: 1.5;
+}
+
+.boldText {
+  font-weight: bold;
+  color: #ff8c00a8;
+}
+
+/* 操作按钮区域 */
+.actionButtons {
+  width: 100%;
+  margin-bottom: 40rpx;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.actionBtn {
+  flex: 1;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+  padding: 20rpx;
+  border: none;
+  text-align: center;
+  line-height: 1;
+
+  &::after {
+    border: none;
+  }
+}
+
+.primary {
+  background: #2c3e50;
+  color: #fff;
+}
+
+.secondary {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+/* 温馨提示 */
+.tips {
+  width: 100%;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.tipsTitle {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 20rpx;
+}
+
+.tipsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.tipsContent text {
+  font-size: 24rpx;
+  color: #7f8c8d;
+  line-height: 1.5;
 }

@@ -1,3 +1,4 @@
 export default definePageConfig({
-  navigationBarTitleText: 'UprivacyUpolicy',
+  navigationStyle: 'custom',
+  navigationBarTitleText: '',
 })

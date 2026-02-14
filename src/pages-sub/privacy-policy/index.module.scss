@@ -1,3 +1,77 @@
-.container {
+.page {
   min-height: 100vh;
+  background: #fff;
+}
+
+.scrollView {
+  background: #fff;
+}
+
+.contentContainer {
+  padding: 30rpx 30rpx 50rpx 30rpx;
+}
+
+.title {
+  margin: 30rpx;
+  margin-bottom: 40rpx;
+  margin-top: 70rpx;
+  font-size: 35rpx;
+  font-weight: 600;
+  text-align: center;
+}
+
+.subTitle {
+  margin: 30rpx;
+  margin-bottom: 40rpx;
+  margin-top: 0;
+  font-size: 30rpx;
+  font-weight: 500;
+  text-align: center;
+}
+
+.chapter {
+  margin-bottom: 50rpx;
+}
+
+.chapterTitle {
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 30rpx;
+  color: #333;
+  border-left: 8rpx solid #000;
+  padding-left: 20rpx;
+}
+
+.sectionTitle {
+  font-size: 30rpx;
+  font-weight: 500;
+  margin: 25rpx 0 15rpx 0;
+  color: #444;
+}
+
+.paragraph {
+  font-size: 28rpx;
+  line-height: 1.6;
+  margin-bottom: 20rpx;
+  color: #555;
+  text-align: justify;
+}
+
+.indent {
+  margin-left: 40rpx;
+  color: #666;
+}
+
+.updateInfo {
+  margin-top: 60rpx;
+  padding: 30rpx;
+  background-color: #f9f9f9;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+  color: #666;
+  text-align: center;
+}
+
+.bottomSpacer {
+  height: 5vh;
 }

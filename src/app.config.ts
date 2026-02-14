@@ -1,7 +1,7 @@
 export default defineAppConfig({
   pages: [
-    "pages/home/index",
     "pages/splash/index",
+    "pages/home/index",
     "pages/category/index",
     "pages/cart/index",
     "pages/my/index",
@@ -51,10 +51,30 @@ export default defineAppConfig({
     selectedColor: "#000000",
     backgroundColor: "#ffffff",
     list: [
-      { pagePath: "pages/home/index", text: "首页", iconPath: "assets/icons/home.png", selectedIconPath: "assets/icons/home-active.png" },
-      { pagePath: "pages/category/index", text: "分类", iconPath: "assets/icons/category.png", selectedIconPath: "assets/icons/category-active.png" },
-      { pagePath: "pages/cart/index", text: "购物车", iconPath: "assets/icons/cart.png", selectedIconPath: "assets/icons/cart-active.png" },
-      { pagePath: "pages/my/index", text: "我的", iconPath: "assets/icons/my.png", selectedIconPath: "assets/icons/my-active.png" },
+      {
+        pagePath: "pages/home/index",
+        text: "首页",
+        iconPath: "assets/icons/home.png",
+        selectedIconPath: "assets/icons/home-active.png",
+      },
+      {
+        pagePath: "pages/category/index",
+        text: "分类",
+        iconPath: "assets/icons/category.png",
+        selectedIconPath: "assets/icons/category-active.png",
+      },
+      {
+        pagePath: "pages/cart/index",
+        text: "购物车",
+        iconPath: "assets/icons/cart.png",
+        selectedIconPath: "assets/icons/cart-active.png",
+      },
+      {
+        pagePath: "pages/my/index",
+        text: "我的",
+        iconPath: "assets/icons/my.png",
+        selectedIconPath: "assets/icons/my-active.png",
+      },
     ],
   },
 });

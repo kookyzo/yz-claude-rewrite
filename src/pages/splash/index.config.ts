@@ -1,3 +1,5 @@
 export default definePageConfig({
-  navigationBarTitleText: 'Usplash',
+  navigationStyle: 'custom',
+  navigationBarTitleText: '',
+  disableScroll: true,
 })

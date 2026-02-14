@@ -1,3 +1,469 @@
+/* 页面容器 */
 .container {
   min-height: 100vh;
+  background: #fff;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 顶部图片 */
+.topImage {
+  height: 25vh;
+  width: 100%;
+
+  image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+.topImageFallback {
+  height: 25vh;
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 发布会信息 */
+.infoContainer {
+  height: 15vh;
+  display: flex;
+}
+
+.infoContainerLeft {
+  width: 82%;
+  margin-left: 30rpx;
+}
+
+.infoTitle {
+  margin-top: 26rpx;
+  margin-bottom: 20rpx;
+  font-size: 32rpx;
+  line-height: 1.2;
+}
+
+.infoAddress,
+.infoTime {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+.infoIcon {
+  width: 32rpx;
+  height: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: grayscale(100%) brightness(0.6);
+  }
+}
+
+.infoAddress text,
+.infoTime text {
+  font-size: 22rpx;
+  margin-left: 10rpx;
+}
+
+.infoContainerRight {
+  width: 10%;
+  margin-top: 30rpx;
+}
+
+.infoShare {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.shareBtn {
+  width: 80rpx;
+  height: 80rpx;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+
+  &::after {
+    border: none;
+  }
+}
+
+.shareIcon {
+  width: 40rpx;
+  height: 40rpx;
+  display: block;
+}
+
+/* 填写信息 */
+.enterInfoContainer {
+  display: flex;
+  flex-direction: column;
+  margin-left: 30rpx;
+  margin-right: 60rpx;
+  margin-top: 30rpx;
+}
+
+.enterInfoTitle {
+  margin-top: 40rpx;
+}
+
+.requiredField {
+  margin-left: 600rpx;
+  white-space: nowrap;
+  font-size: 25rpx;
+  color: rgb(104, 104, 104);
+}
+
+.enterInfoForm {
+  width: 100%;
+}
+
+.formItem {
+  width: 100%;
+  margin-bottom: 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.inputContainer {
+  border: 2rpx solid black;
+  color: #929191;
+  width: 100%;
+  padding: 15rpx;
+  background: #f5f5f5;
+  border-radius: 6rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.notCorrect {
+  border: 2rpx solid rgb(206, 22, 22) !important;
+  color: rgb(206, 22, 22);
+}
+
+/* 手机号输入 */
+.phoneInputWrapper {
+  position: relative;
+  width: 100%;
+  background: #f5f5f5;
+  border: 2rpx solid black;
+  border-radius: 6rpx;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.phoneInput {
+  flex: 1;
+  padding: 15rpx;
+  background: transparent;
+  border: none;
+  color: #929191;
+  font-size: 28rpx;
+}
+
+.getPhoneBtn {
+  background: #d0d0d0;
+  color: #333;
+  font-size: 24rpx;
+  font-weight: 500;
+  padding: 15rpx 20rpx;
+  border: 1rpx solid #999;
+  border-left: 2rpx solid #999;
+  white-space: nowrap;
+  min-width: 120rpx;
+  margin-right: 10rpx;
+  border-radius: 6rpx;
+  line-height: 1;
+
+  &::after {
+    border: none;
+  }
+
+  &:active {
+    background: #bbb;
+    color: #222;
+    border-color: #777;
+  }
+}
+
+/* 人数选择 */
+.peoplePicker {
+  border: 2rpx solid black;
+  color: #929191;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pickerView {
+  padding: 15rpx;
+  background: #f5f5f5;
+  border-radius: 6rpx;
+}
+
+.notCorrectPickerView {
+  color: #CE1616;
+}
+
+/* 预约时间触发按钮 */
+.pickerBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15rpx 20rpx;
+  border: 2rpx solid rgb(0, 0, 0);
+  background-color: rgb(244, 244, 244);
+  border-radius: 0;
+  margin-top: 10rpx;
+  margin-bottom: 20rpx;
+  box-sizing: border-box;
+}
+
+.pickerBtnText {
+  color: #929191;
+  font-size: 28rpx;
+}
+
+.notCorrectTime {
+  color: rgb(206, 22, 22);
+}
+
+/* 授权 */
+.auth {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin-top: 40rpx;
+  padding: 10rpx 0;
+}
+
+.authError {
+  border: 2rpx solid rgb(206, 22, 22);
+  border-radius: 6rpx;
+  background-color: #fff5f5;
+}
+
+.authRadio {
+  width: 60rpx;
+  height: 60rpx;
+  margin-right: 15rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.authCheckbox {
+  width: 30rpx;
+  height: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+.checked {
+  color: rgb(88, 82, 82);
+  background-color: #f5f5f5;
+}
+
+.unchecked {
+  color: #ccc;
+  border: 2rpx solid #ddd;
+}
+
+.authText {
+  font-size: 22rpx;
+  font-weight: 300;
+  flex: 1;
+}
+
+/* 提交按钮 */
+.submitBtn {
+  width: 100%;
+  background: #000;
+  border-radius: 0;
+  margin-top: 20rpx;
+  margin-bottom: 40rpx;
+
+  button {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    border: none;
+    line-height: 1;
+    padding: 24rpx 0;
+    font-size: 30rpx;
+
+    &::after {
+      border: none;
+    }
+  }
+}
+
+/* 时间选择弹窗遮罩 */
+.timePickerMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 9999;
+}
+
+/* 时间选择弹窗 */
+.timePickerDialog {
+  width: 100%;
+  background: #fff;
+  border-radius: 0;
+  padding: 30rpx;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 弹窗头部 */
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 45rpx;
+  margin-left: 20rpx;
+  margin-right: 20rpx;
+  margin-top: 40rpx;
+  border-bottom: rgb(83, 83, 83) solid 2rpx;
+  font-size: 40rpx;
+  font-weight: 300;
+}
+
+.dialogHeaderTitle {
+  font-weight: 600;
+}
+
+.dialogClose {
+  font-size: 40rpx;
+  padding: 10rpx;
+}
+
+/* 日期选择区域 */
+.sectionTitle {
+  font-size: 35rpx;
+  font-weight: 300;
+  text-align: center;
+  margin-top: 50rpx;
+  margin-bottom: 50rpx;
+}
+
+.weekbar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  font-size: 22rpx;
+  margin: 0 20rpx 10rpx 20rpx;
+
+  text {
+    width: 60rpx;
+    text-align: center;
+    margin: 0 15rpx;
+  }
+}
+
+.dateList {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin: 0 20rpx;
+  padding-bottom: 40rpx;
+  border-bottom: rgb(136, 136, 136) solid 2rpx;
+}
+
+.dateItem {
+  height: 50rpx;
+  width: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 5rpx 15rpx;
+  border-radius: 0;
+  box-sizing: border-box;
+  font-size: 25rpx;
+}
+
+.dateSelected {
+  background: rgb(77, 77, 77);
+  color: #fff;
+}
+
+.dateDisabled {
+  background: #f8f9fa;
+  color: #6c757d;
+  opacity: 0.6;
+}
+
+/* 时间段 */
+.timeSection {
+  margin-top: 40rpx;
+  margin-bottom: 120rpx;
+}
+
+.timeList {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: 40rpx;
+  gap: 20rpx;
+}
+
+.timeItem {
+  height: 50rpx;
+  width: 30%;
+  font-size: 23rpx;
+  border: 1rpx solid rgb(0, 0, 0);
+  border-radius: 0;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.timeSelected {
+  background: rgb(77, 77, 77);
+  color: #fff;
+}
+
+/* 确认按钮 */
+.confirmBtn {
+  height: 80rpx;
+  width: 90%;
+  margin-top: 30rpx;
+  margin-left: 5%;
+  background-color: black;
+  color: rgb(255, 255, 255);
+  margin-bottom: 50rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }

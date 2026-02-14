@@ -1,3 +1,4 @@
 export default definePageConfig({
-  navigationBarTitleText: 'UproductUcms',
+  navigationStyle: 'custom',
+  navigationBarTitleText: '',
 })
