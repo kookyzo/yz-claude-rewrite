@@ -65,7 +65,8 @@ function computeGreeting(
 export default function My() {
   const { ensureLogin } = useAuth();
   const { statusBarHeight, navBarHeight, screenWidth } = useSystemInfo();
-  const { isRegistered, fetchUserInfo } = useUserStore();
+  const isRegistered = useUserStore(state => state.isRegistered);
+  const fetchUserInfo = useUserStore(state => state.fetchUserInfo);
 
   const [isPopupShow, setIsPopupShow] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);

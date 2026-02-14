@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -24,7 +24,12 @@ import * as cartService from "@/services/cart.service";
 import * as wishService from "@/services/wish.service";
 import { formatPrice } from "@/utils/format";
 import { navigateTo, switchTab } from "@/utils/navigation";
+import { getPreloadedImagePath, preloadImages } from "@/utils/image";
 import styles from "./index.module.scss";
+
+const IMAGE_PRELOAD_TIMEOUT = 3000;
+const RECOMMEND_IMAGE_PRELOAD_CONCURRENCY = 3;
+const WEAPP_IMAGE_NO_FADE: any = { fadeShow: false, fadeIn: false };
 
 interface SizeOption {
   skuId: string;
@@ -50,9 +55,81 @@ interface RecommendProduct {
   priority: number;
 }
 
+interface BufferedRecommendImageProps {
+  src: string;
+}
+
+function BufferedRecommendImage({ src }: BufferedRecommendImageProps) {
+  const [displaySrc, setDisplaySrc] = useState(src);
+  const [pendingSrc, setPendingSrc] = useState<string>("");
+
+  useEffect(() => {
+    if (!src) {
+      setDisplaySrc("");
+      setPendingSrc("");
+      return;
+    }
+    if (!displaySrc) {
+      setDisplaySrc(src);
+      return;
+    }
+    if (src === displaySrc || src === pendingSrc) return;
+    setPendingSrc(src);
+  }, [src, displaySrc, pendingSrc]);
+
+  const onPendingLoaded = useCallback(() => {
+    if (!pendingSrc) return;
+    setDisplaySrc(pendingSrc);
+    setPendingSrc("");
+  }, [pendingSrc]);
+
+  const onPendingError = useCallback(() => {
+    if (!pendingSrc) return;
+    setDisplaySrc(pendingSrc);
+    setPendingSrc("");
+  }, [pendingSrc]);
+
+  if (!displaySrc && !pendingSrc) {
+    return <View className={styles.recommendedImagePlaceholder}>暂无图片</View>;
+  }
+
+  return (
+    <View className={styles.recommendedImageStage}>
+      {displaySrc ? (
+        <Image
+          className={`${styles.recommendedImage} ${styles.recommendedImageCurrent}`}
+          src={displaySrc}
+          mode="aspectFill"
+          lazyLoad={false}
+          {...WEAPP_IMAGE_NO_FADE}
+        />
+      ) : null}
+      {pendingSrc ? (
+        <Image
+          className={`${styles.recommendedImage} ${styles.recommendedImagePending}`}
+          src={pendingSrc}
+          mode="aspectFill"
+          lazyLoad={false}
+          onLoad={onPendingLoaded}
+          onError={onPendingError}
+          {...WEAPP_IMAGE_NO_FADE}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+function toRecommendThumbUrl(url: string): string {
+  if (!url || !/^https?:\/\//.test(url)) return url;
+  if (url.includes("imageMogr2") || url.includes("imageView2")) return url;
+  if (!url.includes("qcloud")) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}imageMogr2/thumbnail/300x300/quality/80/format/webp`;
+}
+
 export default function ProductDetail() {
   const router = useRouter();
-  const { ensureRegistered, userId } = useAuth();
+  const { ensureRegistered } = useAuth();
   const { processImages } = useImageProcessor();
   const { statusBarHeight, navBarHeight } = useSystemInfo();
 
@@ -92,6 +169,7 @@ export default function ProductDetail() {
     async (targetSkuId: string) => {
       setLoading(true);
       setCurrentImageIndex(0);
+      setRecommendations([]);
       try {
         const res = await productService.getProductDetail(targetSkuId);
         if (res.code !== 200 || !res.data) {
@@ -110,6 +188,9 @@ export default function ProductDetail() {
         setPrice(sku.price || 0);
         setSizeValue(sku.sizeValue || sku.size || "");
         setMaterialName(sku.materialName || sku.material_name || "");
+        const recommendationsTask = productService
+          .getRecommendations(targetSkuId)
+          .catch(() => null);
 
         // Process SKU main images
         const mainImageUrls = sku.skuMainImages || [];
@@ -220,11 +301,11 @@ export default function ProductDetail() {
 
         // Load recommendations
         try {
-          const recRes = await productService.getRecommendations(targetSkuId);
-          if (recRes.code === 200 && recRes.data) {
+          const recRes = await recommendationsTask;
+          if (recRes && recRes.code === 200 && recRes.data) {
             const recData = recRes.data as any;
             const recList = recData.recommendations || recData || [];
-            const items: RecommendProduct[] = (
+            let items: RecommendProduct[] = (
               Array.isArray(recList) ? recList : []
             )
               .slice(0, 3)
@@ -244,10 +325,55 @@ export default function ProductDetail() {
               items.splice(1, 0, highest);
             }
 
+            const recCloudUrls = items
+              .map((r) => r.image)
+              .filter((u): u is string => !!u && u.startsWith("cloud://"));
+            if (recCloudUrls.length > 0) {
+              const recHttpUrls = await processImages(recCloudUrls, {
+                width: 300,
+                height: 300,
+                quality: 80,
+              });
+              const urlMap = new Map<string, string>();
+              recCloudUrls.forEach((cu, i) => urlMap.set(cu, recHttpUrls[i]));
+              items = items.map((r) => ({
+                ...r,
+                image: r.image.startsWith("cloud://")
+                  ? urlMap.get(r.image) || r.image
+                  : r.image,
+              }));
+            }
+
+            items = items.map((r) => ({
+              ...r,
+              image: toRecommendThumbUrl(r.image),
+            }));
+
+            const recUrls = items
+              .map((r) => r.image)
+              .filter((u): u is string => !!u);
+            if (recUrls.length > 0) {
+              await preloadImages(recUrls, {
+                concurrency: RECOMMEND_IMAGE_PRELOAD_CONCURRENCY,
+                timeoutMs: IMAGE_PRELOAD_TIMEOUT,
+              });
+              items = items.map((r) => {
+                const localPath = getPreloadedImagePath(r.image);
+                if (!localPath) return r;
+                return {
+                  ...r,
+                  image: localPath,
+                };
+              });
+            }
+
             setRecommendations(items);
+          } else {
+            setRecommendations([]);
           }
         } catch {
           // Ignore recommendation errors
+          setRecommendations([]);
         }
       } catch (err) {
         console.error("loadProductDetail error:", err);
@@ -773,19 +899,14 @@ export default function ProductDetail() {
                     <Text className={styles.sectionTitle}>为您推荐</Text>
                   </View>
                   <View className={styles.recommendedContainer}>
-                    {recommendations.map((item) => (
+                    {recommendations.map((item, index) => (
                       <View
-                        key={item._id}
+                        key={`rec-slot-${index}`}
                         className={styles.recommendedItem}
                         onClick={() => handleGoToRecommend(item._id)}
                       >
                         <View className={styles.recommendedImageContainer}>
-                          <Image
-                            className={styles.recommendedImage}
-                            src={item.image}
-                            mode="aspectFill"
-                            lazyLoad
-                          />
+                          <BufferedRecommendImage src={item.image} />
                         </View>
                         <Text className={styles.recommendedNameEn}>
                           {item.nameEN}

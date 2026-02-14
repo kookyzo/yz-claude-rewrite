@@ -15,8 +15,16 @@ import styles from './index.module.scss'
 
 export default function Cart() {
   const { ensureLogin } = useAuth()
-  const { items, loading, totalPrice, selectedCount, isAllChecked } = useCartStore()
-  const { fetchCart, toggleItem, toggleAll, updateQuantity, removeItem } = useCartStore()
+  const items = useCartStore(state => state.items)
+  const loading = useCartStore(state => state.loading)
+  const totalPrice = useCartStore(state => state.totalPrice)
+  const selectedCount = useCartStore(state => state.selectedCount)
+  const isAllChecked = useCartStore(state => state.isAllChecked)
+  const fetchCart = useCartStore(state => state.fetchCart)
+  const toggleItem = useCartStore(state => state.toggleItem)
+  const toggleAll = useCartStore(state => state.toggleAll)
+  const updateQuantity = useCartStore(state => state.updateQuantity)
+  const removeItem = useCartStore(state => state.removeItem)
 
   const [isPopupShow, setIsPopupShow] = useState(false)
   const [pageLoading, setPageLoading] = useState(true)

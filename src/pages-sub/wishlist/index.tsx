@@ -168,6 +168,7 @@ export default function Wishlist() {
                         className={styles.displayImage}
                         src={item.image}
                         mode='aspectFill'
+                        lazyLoad
                       />
                     </View>
                     <View className={styles.exceptDisplayTop}>

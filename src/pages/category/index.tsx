@@ -4,6 +4,7 @@ import Taro, { useLoad, useReady, useDidShow } from "@tarojs/taro";
 import { useSystemInfo } from "@/hooks/useSystemInfo";
 import { useImageProcessor } from "@/hooks/useImageProcessor";
 import { useAppStore } from "@/stores/useAppStore";
+import { preloadImage, preloadImages, getPreloadedImagePath } from "@/utils/image";
 import {
   listSubSeries,
   listCategories,
@@ -28,6 +29,11 @@ const SELECTED_ICON = "/assets/icons/selected.png";
 const NOT_SELECTED_ICON = "/assets/icons/not_selected.png";
 
 const PAGE_SIZE = 200;
+const IMAGE_PRELOAD_TIMEOUT = 3000;
+const PRODUCT_IMAGE_PRELOAD_CONCURRENCY = 3;
+const CRITICAL_PRODUCT_PRELOAD_CONCURRENCY = 4;
+const CRITICAL_PRODUCT_READY_COUNT = 4;
+const WEAPP_IMAGE_NO_FADE: any = { fadeShow: false, fadeIn: false };
 
 const SORT_TEXT_MAP: Record<string, string> = {
   default: "默认排序",
@@ -87,6 +93,75 @@ interface SelectedFilter {
   type: FilterType | "";
   id: string;
   name: string;
+}
+
+interface BufferedProductImageProps {
+  src: string;
+}
+
+function BufferedProductImage({ src }: BufferedProductImageProps) {
+  const [displaySrc, setDisplaySrc] = useState(src);
+  const [pendingSrc, setPendingSrc] = useState<string>("");
+
+  useEffect(() => {
+    if (!src) {
+      setDisplaySrc("");
+      setPendingSrc("");
+      return;
+    }
+    if (!displaySrc) {
+      setDisplaySrc(src);
+      return;
+    }
+    if (src === displaySrc || src === pendingSrc) return;
+    setPendingSrc(src);
+  }, [src, displaySrc, pendingSrc]);
+
+  const onPendingLoaded = useCallback(() => {
+    if (!pendingSrc) return;
+    setDisplaySrc(pendingSrc);
+    setPendingSrc("");
+  }, [pendingSrc]);
+
+  if (!displaySrc && !pendingSrc) {
+    return <View className={styles.productImagePlaceholder}>暂无图片</View>;
+  }
+
+  return (
+    <View className={styles.productImageStage}>
+      {displaySrc ? (
+        <Image
+          className={`${styles.productImage} ${styles.productImageCurrent}`}
+          src={displaySrc}
+          mode="aspectFill"
+          lazyLoad={false}
+          {...WEAPP_IMAGE_NO_FADE}
+        />
+      ) : null}
+      {pendingSrc ? (
+        <Image
+          className={`${styles.productImage} ${styles.productImagePending}`}
+          src={pendingSrc}
+          mode="aspectFill"
+          lazyLoad={false}
+          onLoad={onPendingLoaded}
+          {...WEAPP_IMAGE_NO_FADE}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+function isRemoteImageUrl(url: string): boolean {
+  return /^https?:\/\//.test(url) || url.startsWith("cloud://");
+}
+
+function toCategoryProductThumbUrl(url: string): string {
+  if (!url || !/^https?:\/\//.test(url)) return url;
+  if (url.includes("imageMogr2") || url.includes("imageView2")) return url;
+  if (!url.includes("qcloud")) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}imageMogr2/thumbnail/360x360/quality/80/format/webp`;
 }
 
 // ===== Component =====
@@ -167,6 +242,78 @@ export default function Category() {
   );
 
   const mountedRef = useRef(true);
+
+  const getProductImageUrls = useCallback((items: ProductItem[]): string[] => {
+    return items
+      .map((p) => p.skuMainImages?.[0])
+      .filter((u): u is string => !!u && isRemoteImageUrl(u));
+  }, []);
+
+  const hasCriticalProductImagesReady = useCallback((items: ProductItem[]) => {
+    const criticalUrls = items
+      .map((p) => p.skuMainImages?.[0])
+      .filter((u): u is string => !!u)
+      .slice(0, CRITICAL_PRODUCT_READY_COUNT);
+    if (criticalUrls.length === 0) return true;
+    return criticalUrls.every(
+      (url) => !isRemoteImageUrl(url) || !!getPreloadedImagePath(url),
+    );
+  }, []);
+
+  const preloadCriticalProductImages = useCallback(
+    async (items: ProductItem[]): Promise<boolean> => {
+      const urls = getProductImageUrls(items).slice(0, CRITICAL_PRODUCT_READY_COUNT);
+      if (urls.length === 0) return true;
+      await preloadImages(urls, {
+        concurrency: CRITICAL_PRODUCT_PRELOAD_CONCURRENCY,
+        timeoutMs: IMAGE_PRELOAD_TIMEOUT,
+      });
+      return hasCriticalProductImagesReady(items);
+    },
+    [getProductImageUrls, hasCriticalProductImagesReady],
+  );
+
+  const preloadAllProductImagesInBackground = useCallback(
+    (items: ProductItem[]) => {
+      const urls = getProductImageUrls(items);
+      if (urls.length === 0) return;
+      void preloadImages(urls, {
+        concurrency: PRODUCT_IMAGE_PRELOAD_CONCURRENCY,
+        timeoutMs: IMAGE_PRELOAD_TIMEOUT,
+      });
+    },
+    [getProductImageUrls],
+  );
+
+  const preloadTopImageInBackground = useCallback((url: string) => {
+    if (!url || !isRemoteImageUrl(url)) return;
+    void preloadImage(url, IMAGE_PRELOAD_TIMEOUT);
+  }, []);
+
+  const preloadSubSeriesDisplayImages = useCallback(
+    async (list: SubSeriesListItem[]) => {
+      const urls = list
+        .map((s) => s.displayImage)
+        .filter((u): u is string => !!u && isRemoteImageUrl(u));
+      if (urls.length === 0) return;
+
+      const critical = urls.slice(0, 3);
+      if (critical.length > 0) {
+        await preloadImages(critical, {
+          concurrency: PRODUCT_IMAGE_PRELOAD_CONCURRENCY,
+          timeoutMs: IMAGE_PRELOAD_TIMEOUT,
+        });
+      }
+
+      if (urls.length > critical.length) {
+        void preloadImages(urls.slice(critical.length), {
+          concurrency: 2,
+          timeoutMs: IMAGE_PRELOAD_TIMEOUT,
+        });
+      }
+    },
+    [],
+  );
 
   // Keep ref in sync
   const updateFilterSections = useCallback((sections: FilterSection[]) => {
@@ -249,6 +396,7 @@ export default function Category() {
         if (firstImage.startsWith("cloud://")) {
           firstImage = urlMap.get(firstImage) || firstImage;
         }
+        firstImage = toCategoryProductThumbUrl(firstImage);
         return {
           _id: p._id,
           nameCN: p.nameCN || "",
@@ -352,6 +500,8 @@ export default function Category() {
           });
         }
 
+        await preloadSubSeriesDisplayImages(displayList);
+
         if (mountedRef.current) setSubSeriesList(displayList);
       }
 
@@ -433,7 +583,7 @@ export default function Category() {
       if (mountedRef.current) setShowLoading(false);
       Taro.showToast({ title: "数据加载失败", icon: "none" });
     }
-  }, [processImages, updateFilterSections]);
+  }, [processImages, preloadSubSeriesDisplayImages, updateFilterSections]);
 
   /** Load products by a single filter dimension */
   const loadProducts = useCallback(
@@ -523,6 +673,14 @@ export default function Category() {
           );
           const moreAvailable = pagination.page < pagination.totalPages;
 
+          if (!append) {
+            await preloadCriticalProductImages(processed);
+          } else {
+            void preloadCriticalProductImages(processed);
+          }
+          preloadTopImageInBackground(topImage);
+          preloadAllProductImagesInBackground(processed);
+
           if (mountedRef.current) {
             setProducts((prev) =>
               append ? [...prev, ...processed] : processed,
@@ -555,7 +713,14 @@ export default function Category() {
         Taro.showToast({ title: "加载商品失败", icon: "none" });
       }
     },
-    [processProductData, isMaterialGroupId, expandMaterialIds],
+    [
+      processProductData,
+      isMaterialGroupId,
+      expandMaterialIds,
+      preloadCriticalProductImages,
+      preloadAllProductImagesInBackground,
+      preloadTopImageInBackground,
+    ],
   );
 
   /** Load products with combined secondary filters */
@@ -605,6 +770,9 @@ export default function Category() {
           const { processed } = await processProductData(rawProducts);
           const moreAvailable = pagination.page < pagination.totalPages;
 
+          await preloadCriticalProductImages(processed);
+          preloadAllProductImagesInBackground(processed);
+
           if (mountedRef.current) {
             setProducts(processed);
             setProductCount(skuCount);
@@ -620,7 +788,12 @@ export default function Category() {
         Taro.showToast({ title: "筛选失败", icon: "none" });
       }
     },
-    [expandMaterialIds, processProductData],
+    [
+      expandMaterialIds,
+      processProductData,
+      preloadCriticalProductImages,
+      preloadAllProductImagesInBackground,
+    ],
   );
 
   // ===== Interaction handlers =====
@@ -990,7 +1163,8 @@ export default function Category() {
                       className={styles.subseriesImage}
                       src={sub.displayImage}
                       mode="aspectFill"
-                      lazyLoad
+                      lazyLoad={false}
+                      {...WEAPP_IMAGE_NO_FADE}
                     />
                   ) : (
                     <View className={styles.subseriesImagePlaceholder}>
@@ -1013,7 +1187,8 @@ export default function Category() {
                   className={styles.headerImage}
                   src={headerImage}
                   mode="aspectFill"
-                  lazyLoad
+                  lazyLoad={false}
+                  {...WEAPP_IMAGE_NO_FADE}
                 />
               </View>
             )}
@@ -1144,20 +1319,15 @@ export default function Category() {
             {/* Product grid */}
             <View className={styles.productGridContainer}>
               <View className={styles.productGrid}>
-                {products.map((product) => (
+                {products.map((product, index) => (
                   <View
-                    key={product._id}
+                    key={`slot-${index}`}
                     className={styles.productItem}
                     onClick={() => handleProductTap(product._id)}
                   >
                     <View className={styles.productImageWrapper}>
                       {product.skuMainImages[0] ? (
-                        <Image
-                          className={styles.productImage}
-                          src={product.skuMainImages[0]}
-                          mode="aspectFill"
-                          lazyLoad
-                        />
+                        <BufferedProductImage src={product.skuMainImages[0]} />
                       ) : (
                         <View className={styles.productImagePlaceholder}>
                           暂无图片

@@ -329,7 +329,7 @@ export default function OrderList() {
                 </View>
 
                 <View className={styles.cardBody}>
-                  <Image className={styles.productImg} src={order.image} mode='aspectFill' />
+                  <Image className={styles.productImg} src={order.image} mode='aspectFill' lazyLoad />
                   <View className={styles.productInfo}>
                     <View className={styles.infoTop}>
                       <View className={styles.infoLeft}>

@@ -1,3 +1,4 @@
+import React from 'react'
 import { View, Image, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { formatPrice } from '@/utils/format'
@@ -22,7 +23,7 @@ interface ProductCardProps {
   onPress?: (skuId: string) => void
 }
 
-export default function ProductCard({
+const ProductCard: React.FC<ProductCardProps> = React.memo(function ProductCard({
   skuId,
   image,
   name,
@@ -31,7 +32,7 @@ export default function ProductCard({
   price,
   onAddToCart,
   onPress,
-}: ProductCardProps) {
+}) {
   const handlePress = () => {
     if (onPress) {
       onPress(skuId)
@@ -48,7 +49,7 @@ export default function ProductCard({
   return (
     <View className={styles.card}>
       <View className={styles.imageArea} onClick={handlePress}>
-        <Image className={styles.image} src={image} mode='aspectFill' />
+        <Image className={styles.image} src={image} mode='aspectFill' lazyLoad />
       </View>
       <View className={styles.info}>
         <View className={styles.infoLeft}>
@@ -65,4 +66,6 @@ export default function ProductCard({
       </View>
     </View>
   )
-}
+})
+
+export default ProductCard

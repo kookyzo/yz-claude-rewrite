@@ -4,8 +4,8 @@ import {
   Text,
   Image,
   ScrollView,
-  Swiper,
-  SwiperItem,
+  Swiper as TaroSwiper,
+  SwiperItem as TaroSwiperItem,
 } from "@tarojs/components";
 import Taro, {
   useLoad,
@@ -25,6 +25,12 @@ import {
   getModelShowData,
 } from "@/services/product.service";
 import { formatPrice } from "@/utils/format";
+import {
+  preloadImage,
+  preloadImages,
+  getPreloadedImagePath,
+} from "@/utils/image";
+import { Swiper as NutSwiper } from "@nutui/nutui-react-taro";
 import TopBar, { TOP_BAR_BOTTOM_PADDING_RPX } from "@/components/TopBar";
 import SlidingBar from "@/components/SlidingBar";
 import FloatBtn from "@/components/FloatBtn";
@@ -33,6 +39,8 @@ import LoadingBar from "@/components/LoadingBar";
 import CustomTabBar from "@/custom-tab-bar";
 import type { Sku } from "@/types/product";
 import styles from "./index.module.scss";
+
+const WEAPP_IMAGE_NO_FADE: any = { fadeShow: false, fadeIn: false };
 
 /** Banner item from cloud */
 interface BannerItem {
@@ -56,6 +64,71 @@ interface ProductItem extends Sku {
   formattedPrice: string;
 }
 
+/** Lightweight product card model to reduce setData payload */
+interface SeriesProductCard {
+  _id: string;
+  nameCN: string;
+  formattedPrice: string;
+  image: string;
+}
+
+interface BufferedProductImageProps {
+  src: string;
+}
+
+function BufferedProductImage({ src }: BufferedProductImageProps) {
+  const [displaySrc, setDisplaySrc] = useState(src);
+  const [pendingSrc, setPendingSrc] = useState<string>("");
+
+  useEffect(() => {
+    if (!src) {
+      setDisplaySrc("");
+      setPendingSrc("");
+      return;
+    }
+    if (!displaySrc) {
+      setDisplaySrc(src);
+      return;
+    }
+    if (src === displaySrc || src === pendingSrc) return;
+    setPendingSrc(src);
+  }, [src, displaySrc, pendingSrc]);
+
+  const onPendingLoaded = useCallback(() => {
+    if (!pendingSrc) return;
+    setDisplaySrc(pendingSrc);
+    setPendingSrc("");
+  }, [pendingSrc]);
+
+  if (!displaySrc && !pendingSrc) {
+    return <View className={styles.productImage} />;
+  }
+
+  return (
+    <View className={styles.productImageStage}>
+      {displaySrc ? (
+        <Image
+          className={`${styles.productImage} ${styles.productImageCurrent}`}
+          src={displaySrc}
+          mode="aspectFill"
+          lazyLoad={false}
+          {...WEAPP_IMAGE_NO_FADE}
+        />
+      ) : null}
+      {pendingSrc ? (
+        <Image
+          className={`${styles.productImage} ${styles.productImagePending}`}
+          src={pendingSrc}
+          mode="aspectFill"
+          lazyLoad={false}
+          onLoad={onPendingLoaded}
+          {...WEAPP_IMAGE_NO_FADE}
+        />
+      ) : null}
+    </View>
+  );
+}
+
 /** Model show item from cloud */
 interface ModelShowItem {
   _id: string;
@@ -75,14 +148,39 @@ const MODEL_SKU_IDS = [
 ];
 
 const AUTOPLAY_INTERVAL = 3000;
-const RESUME_DELAY = 3000;
+const SERIES_RESUME_DELAY = 6000;
+const MODEL_RESUME_DELAY = 3000;
 const SERIES_SWIPER_SELECTOR = "#home-series-swiper";
 const MODEL_SWIPER_SELECTOR = "#home-model-swiper";
+const IMAGE_PRELOAD_TIMEOUT = 3000;
+const PRODUCT_IMAGE_PRELOAD_CONCURRENCY = 3;
+const CRITICAL_PRODUCT_PRELOAD_CONCURRENCY = 4;
+const SECOND_SERIES_PRELOAD_CONCURRENCY = 6;
+const BACKGROUND_SERIES_BATCH_SIZE = 2;
+const BACKGROUND_PRODUCT_PRELOAD_CONCURRENCY = 2;
+const CRITICAL_PRODUCT_READY_COUNT = 4;
+const PRODUCT_PRELOAD_RETRY_COOLDOWN_MS = 12000;
+const PRODUCT_PRELOAD_LOG_COOLDOWN_MS = 30000;
+const ENABLE_IMAGE_PRELOAD_DEBUG_LOG = false;
+
+function isRemoteImageUrl(url: string): boolean {
+  return /^https?:\/\//.test(url) || url.startsWith("cloud://");
+}
+
+function toHomeProductThumbUrl(url: string): string {
+  if (!url || !/^https?:\/\//.test(url)) return url;
+  if (url.includes("imageMogr2") || url.includes("imageView2")) return url;
+  // Keep this optimization on COS-like URLs to avoid affecting unknown origins.
+  if (!url.includes("qcloud")) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}imageMogr2/thumbnail/280x280/quality/80/format/webp`;
+}
 
 export default function Home() {
   // ===== Hooks =====
   const { backgroundColor } = useNavBarScroll();
-  const { statusBarHeight, navBarHeight, screenWidth } = useSystemInfo();
+  const { statusBarHeight, navBarHeight, screenWidth, safeAreaBottom } =
+    useSystemInfo();
   const { processImages } = useImageProcessor();
   const setCurrentTab = useAppStore((s) => s.setCurrentTab);
 
@@ -95,9 +193,10 @@ export default function Home() {
   const [subSeriesList, setSubSeriesList] = useState<SubSeriesItem[]>([]);
   const [currentSeriesIndex, setCurrentSeriesIndex] = useState(0);
   const [currentSeriesProducts, setCurrentSeriesProducts] = useState<
-    ProductItem[]
+    SeriesProductCard[]
   >([]);
   const [currentSubSeriesNameEN, setCurrentSubSeriesNameEN] = useState("");
+  const [seriesSwipeDisabled, setSeriesSwipeDisabled] = useState(false);
 
   const [modelShowList, setModelShowList] = useState<ModelShowItem[]>([]);
   const [currentModelIndex, setCurrentModelIndex] = useState(0);
@@ -108,10 +207,14 @@ export default function Home() {
 
   // ===== Refs (for timer/observer access without stale closures) =====
   const allSeriesProductsRef = useRef<Record<string, ProductItem[]>>({});
+  const allSeriesProductCardsRef = useRef<Record<string, SeriesProductCard[]>>(
+    {},
+  );
   const subSeriesListRef = useRef<SubSeriesItem[]>([]);
   const currentSeriesIndexRef = useRef(0);
   const modelShowListRef = useRef<ModelShowItem[]>([]);
   const currentModelIndexRef = useRef(0);
+  const seriesAnimatingRef = useRef(false);
 
   const seriesAutoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modelAutoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -121,11 +224,33 @@ export default function Home() {
   const seriesInViewportRef = useRef(false);
   const modelInViewportRef = useRef(false);
   const seriesIsTouchingRef = useRef(false);
+  const seriesProductsIsTouchingRef = useRef(false);
   const modelIsTouchingRef = useRef(false);
 
   const seriesObserverRef = useRef<Taro.IntersectionObserver | null>(null);
   const modelObserverRef = useRef<Taro.IntersectionObserver | null>(null);
   const mountedRef = useRef(true);
+  const firstScreenReadyRef = useRef(false);
+  const firstScreenGuardRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const productLoadTasksRef = useRef<Record<string, Promise<ProductItem[]>>>(
+    {},
+  );
+  const seriesImageReadyRef = useRef<Set<string>>(new Set());
+  const seriesImageTasksRef = useRef<Record<string, Promise<void>>>({});
+  const seriesProductImageReadyRef = useRef<Set<string>>(new Set());
+  const seriesProductImageTasksRef = useRef<Record<string, Promise<boolean>>>(
+    {},
+  );
+  const seriesProductImageRetryAfterRef = useRef<Record<string, number>>({});
+  const seriesProductImageLastLogAtRef = useRef<Record<string, number>>({});
+  const seriesTouchStartPointRef = useRef<{ x: number; y: number } | null>(
+    null,
+  );
+  const seriesTouchDirectionRef = useRef<"none" | "horizontal" | "vertical">(
+    "none",
+  );
 
   // ===== Layout Calculation =====
   const calculateLayout = useCallback(() => {
@@ -140,6 +265,161 @@ export default function Home() {
     setSwiperContainerTop(topBarTotalHeight + "rpx");
     setSwiperContainerHeight(swiperHeight + "rpx");
   }, [statusBarHeight, navBarHeight, screenWidth]);
+
+  const markFirstScreenReady = useCallback(() => {
+    if (firstScreenReadyRef.current) return;
+    firstScreenReadyRef.current = true;
+    if (firstScreenGuardRef.current) {
+      clearTimeout(firstScreenGuardRef.current);
+      firstScreenGuardRef.current = null;
+    }
+    if (mountedRef.current) {
+      setShowLoading(false);
+    }
+  }, []);
+
+  const ensureSeriesDisplayImagePreloaded = useCallback(
+    async (series: SubSeriesItem | undefined) => {
+      if (!series?._id || !series.displayImage) return;
+      if (seriesImageReadyRef.current.has(series._id)) return;
+
+      const existing = seriesImageTasksRef.current[series._id];
+      if (existing) {
+        await existing;
+        return;
+      }
+
+      const task = (async () => {
+        const ok = await preloadImage(
+          series.displayImage,
+          IMAGE_PRELOAD_TIMEOUT,
+        );
+        if (ok) {
+          seriesImageReadyRef.current.add(series._id);
+        }
+      })().finally(() => {
+        delete seriesImageTasksRef.current[series._id];
+      });
+
+      seriesImageTasksRef.current[series._id] = task;
+      await task;
+    },
+    [],
+  );
+
+  const getSeriesProductImageUrls = useCallback(
+    (items: ProductItem[]): string[] => {
+      return items
+        .map((p) => p.skuMainImages?.[0])
+        .filter((u): u is string => !!u && isRemoteImageUrl(u));
+    },
+    [],
+  );
+
+  const hasCriticalSeriesProductImagesReady = useCallback(
+    (items: ProductItem[]) => {
+      const criticalUrls = items
+        .map((p) => p.skuMainImages?.[0])
+        .filter((u): u is string => !!u)
+        .slice(0, CRITICAL_PRODUCT_READY_COUNT);
+      if (criticalUrls.length === 0) return true;
+      return criticalUrls.every(
+        (url) => !isRemoteImageUrl(url) || !!getPreloadedImagePath(url),
+      );
+    },
+    [],
+  );
+
+  const ensureSeriesProductImagesPreloaded = useCallback(
+    async (
+      subSeriesId: string,
+      items: ProductItem[],
+      concurrency: number = PRODUCT_IMAGE_PRELOAD_CONCURRENCY,
+    ): Promise<boolean> => {
+      if (!subSeriesId) return false;
+      if (seriesProductImageReadyRef.current.has(subSeriesId)) return true;
+
+      const existing = seriesProductImageTasksRef.current[subSeriesId];
+      if (existing) {
+        return existing;
+      }
+
+      const now = Date.now();
+      const retryAfter =
+        seriesProductImageRetryAfterRef.current[subSeriesId] || 0;
+      if (retryAfter > now) {
+        return hasCriticalSeriesProductImagesReady(items);
+      }
+
+      const task = (async () => {
+        const urls = getSeriesProductImageUrls(items);
+        if (urls.length === 0) {
+          seriesProductImageReadyRef.current.add(subSeriesId);
+          delete seriesProductImageRetryAfterRef.current[subSeriesId];
+          return true;
+        }
+
+        const result = await preloadImages(urls, {
+          concurrency,
+          timeoutMs: IMAGE_PRELOAD_TIMEOUT,
+        });
+
+        const criticalReady = hasCriticalSeriesProductImagesReady(items);
+        if (criticalReady) {
+          seriesProductImageReadyRef.current.add(subSeriesId);
+          delete seriesProductImageRetryAfterRef.current[subSeriesId];
+        } else {
+          seriesProductImageReadyRef.current.delete(subSeriesId);
+          seriesProductImageRetryAfterRef.current[subSeriesId] =
+            Date.now() + PRODUCT_PRELOAD_RETRY_COOLDOWN_MS;
+        }
+
+        if (result.failed.length > 0 && ENABLE_IMAGE_PRELOAD_DEBUG_LOG) {
+          const logAt =
+            seriesProductImageLastLogAtRef.current[subSeriesId] || 0;
+          const canLog = Date.now() - logAt >= PRODUCT_PRELOAD_LOG_COOLDOWN_MS;
+          if (canLog) {
+            seriesProductImageLastLogAtRef.current[subSeriesId] = Date.now();
+            console.info(
+              `[home] product image preload partial: ${subSeriesId}, failed=${result.failed.length}`,
+            );
+          }
+        }
+
+        return criticalReady;
+      })().finally(() => {
+        delete seriesProductImageTasksRef.current[subSeriesId];
+      });
+
+      seriesProductImageTasksRef.current[subSeriesId] = task;
+      return task;
+    },
+    [getSeriesProductImageUrls, hasCriticalSeriesProductImagesReady],
+  );
+
+  const hydrateSeriesProductsWithLocalPaths = useCallback(
+    (_subSeriesId: string, items: ProductItem[]): ProductItem[] => {
+      // Keep render src stable as remote URL (legacy behavior) and only use
+      // getImageInfo as warm-up signal to avoid local-path switch flicker.
+      return items;
+    },
+    [],
+  );
+
+  const buildSeriesProductCards = useCallback(
+    (subSeriesId: string, items: ProductItem[]): SeriesProductCard[] => {
+      if (!subSeriesId) return [];
+      const cards: SeriesProductCard[] = items.map((p) => ({
+        _id: p._id,
+        nameCN: p.nameCN,
+        formattedPrice: p.formattedPrice,
+        image: p.skuMainImages?.[0] || "",
+      }));
+      allSeriesProductCardsRef.current[subSeriesId] = cards;
+      return cards;
+    },
+    [],
+  );
 
   // ===== Data Loading =====
   const loadBannersData = useCallback(async () => {
@@ -177,35 +457,67 @@ export default function Home() {
         if (mountedRef.current) {
           setBanners(items);
           setIsLoadingBanners(false);
-          setShowLoading(false);
         }
       } else {
         if (mountedRef.current) {
           setBanners([]);
           setIsLoadingBanners(false);
-          setShowLoading(false);
         }
       }
     } catch {
       if (mountedRef.current) {
         setBanners([]);
         setIsLoadingBanners(false);
-        setShowLoading(false);
       }
     }
   }, [processImages]);
 
   /** Load products for a single series into cache */
   const loadSeriesProductsToCache = useCallback(
-    async (subSeriesId: string) => {
-      try {
-        const res = await getProductsBySubSeries({
-          subSeriesId,
-          sortBy: "default",
-          page: 1,
-          pageSize: 10,
-        });
-        if (res.code === 200) {
+    async (
+      subSeriesId: string,
+      options?: { preloadProductImages?: boolean; preloadConcurrency?: number },
+    ): Promise<ProductItem[]> => {
+      if (!subSeriesId) return [];
+
+      const preloadProductImages = options?.preloadProductImages ?? false;
+      const preloadConcurrency =
+        options?.preloadConcurrency ?? PRODUCT_IMAGE_PRELOAD_CONCURRENCY;
+      const cached = allSeriesProductsRef.current[subSeriesId];
+      if (cached) {
+        if (preloadProductImages) {
+          await ensureSeriesProductImagesPreloaded(
+            subSeriesId,
+            cached,
+            preloadConcurrency,
+          );
+        }
+        return hydrateSeriesProductsWithLocalPaths(subSeriesId, cached);
+      }
+
+      const existingTask = productLoadTasksRef.current[subSeriesId];
+      if (existingTask) {
+        const items = await existingTask;
+        if (preloadProductImages) {
+          await ensureSeriesProductImagesPreloaded(
+            subSeriesId,
+            items,
+            preloadConcurrency,
+          );
+        }
+        return hydrateSeriesProductsWithLocalPaths(subSeriesId, items);
+      }
+
+      const loadTask: Promise<ProductItem[]> = (async () => {
+        try {
+          const res = await getProductsBySubSeries({
+            subSeriesId,
+            sortBy: "default",
+            page: 1,
+            pageSize: 10,
+          });
+          if (res.code !== 200) return [];
+
           // Runtime data may be { products: [...] } or { items: [...] }
           const rawData = res.data as any;
           let products: Sku[] = rawData?.products || rawData?.items || [];
@@ -214,6 +526,7 @@ export default function Home() {
           const cloudUrls = products
             .map((p) => p.skuMainImages?.[0])
             .filter((u): u is string => !!u && u.startsWith("cloud://"));
+          const urlMap = new Map<string, string>();
 
           if (cloudUrls.length > 0) {
             const httpUrls = await processImages(cloudUrls, {
@@ -221,17 +534,18 @@ export default function Home() {
               height: 280,
               quality: 80,
             });
-            const urlMap = new Map<string, string>();
             cloudUrls.forEach((cu, i) => urlMap.set(cu, httpUrls[i]));
-
-            products = products.map((p) => {
-              const first = p.skuMainImages?.[0];
-              if (first && first.startsWith("cloud://")) {
-                return { ...p, skuMainImages: [urlMap.get(first) || first] };
-              }
-              return p;
-            });
           }
+
+          products = products.map((p) => {
+            const first = p.skuMainImages?.[0];
+            if (!first) return p;
+            const normalized = first.startsWith("cloud://")
+              ? urlMap.get(first) || first
+              : first;
+            const thumb = toHomeProductThumbUrl(normalized);
+            return { ...p, skuMainImages: [thumb] };
+          });
 
           const items: ProductItem[] = products.map((p) => ({
             ...p,
@@ -240,111 +554,244 @@ export default function Home() {
 
           allSeriesProductsRef.current[subSeriesId] = items;
           return items;
+        } catch {
+          // silently fail for preload
+          return [];
         }
-      } catch {
-        // silently fail for preload
+      })();
+
+      productLoadTasksRef.current[subSeriesId] = loadTask.finally(() => {
+        delete productLoadTasksRef.current[subSeriesId];
+      });
+
+      const items = await productLoadTasksRef.current[subSeriesId];
+      if (preloadProductImages) {
+        await ensureSeriesProductImagesPreloaded(
+          subSeriesId,
+          items,
+          preloadConcurrency,
+        );
       }
-      return [];
+      return hydrateSeriesProductsWithLocalPaths(subSeriesId, items);
     },
-    [processImages],
+    [
+      ensureSeriesProductImagesPreloaded,
+      hydrateSeriesProductsWithLocalPaths,
+      processImages,
+    ],
   );
 
-  /** Three-phase preload: first screen → adjacent → remaining */
-  const preloadAllSeriesProducts = useCallback(
-    async (list: SubSeriesItem[]) => {
-      if (list.length === 0) return;
-
-      // Phase 1: Load first series immediately
-      const firstId = list[0]._id;
-      const firstProducts = await loadSeriesProductsToCache(firstId);
-      if (mountedRef.current) {
-        setCurrentSeriesProducts(firstProducts);
-        setShowLoading(false);
+  const warmupSeriesAndSyncIfActive = useCallback(
+    async (series: SubSeriesItem | undefined, targetIndex: number) => {
+      if (!series?._id) return;
+      await ensureSeriesDisplayImagePreloaded(series);
+      const items = await loadSeriesProductsToCache(series._id, {
+        preloadProductImages: true,
+        preloadConcurrency: CRITICAL_PRODUCT_PRELOAD_CONCURRENCY,
+      });
+      if (!hasCriticalSeriesProductImagesReady(items)) {
+        await ensureSeriesProductImagesPreloaded(
+          series._id,
+          items,
+          CRITICAL_PRODUCT_PRELOAD_CONCURRENCY,
+        );
       }
 
-      // Phase 2: Adjacent series after 200ms
-      setTimeout(async () => {
-        const adjacent = [1].filter((i) => i < list.length);
-        await Promise.all(
-          adjacent.map((i) => loadSeriesProductsToCache(list[i]._id)),
-        );
-      }, 200);
-
-      // Phase 3: Remaining series after 500ms, batched
-      setTimeout(async () => {
-        const loaded = new Set([firstId, list[1]?._id].filter(Boolean));
-        const remaining = list.filter((s) => !loaded.has(s._id));
-        const batchSize = 3;
-        for (let i = 0; i < remaining.length; i += batchSize) {
-          const batch = remaining.slice(i, i + batchSize);
-          await Promise.all(batch.map((s) => loadSeriesProductsToCache(s._id)));
-          if (i + batchSize < remaining.length) {
-            await new Promise((r) => setTimeout(r, 100));
-          }
-        }
-      }, 500);
+      const hydrated = hydrateSeriesProductsWithLocalPaths(series._id, items);
+      const cards = buildSeriesProductCards(series._id, hydrated);
+      if (
+        mountedRef.current &&
+        currentSeriesIndexRef.current === targetIndex &&
+        !seriesAnimatingRef.current
+      ) {
+        setCurrentSubSeriesNameEN(series.nameEN);
+        setCurrentSeriesProducts(cards);
+      }
     },
-    [loadSeriesProductsToCache],
+    [
+      buildSeriesProductCards,
+      ensureSeriesDisplayImagePreloaded,
+      ensureSeriesProductImagesPreloaded,
+      hasCriticalSeriesProductImagesReady,
+      hydrateSeriesProductsWithLocalPaths,
+      loadSeriesProductsToCache,
+    ],
+  );
+
+  const hasSeriesProductsCache = useCallback((subSeriesId: string) => {
+    return Object.prototype.hasOwnProperty.call(
+      allSeriesProductsRef.current,
+      subSeriesId,
+    );
+  }, []);
+
+  const syncSeriesContentFromCache = useCallback(
+    (index: number): boolean => {
+      const list = subSeriesListRef.current;
+      const series = list[index];
+      if (!series?._id) return false;
+      if (!hasSeriesProductsCache(series._id)) return false;
+
+      const cached = allSeriesProductsRef.current[series._id] || [];
+      const hydrated = hydrateSeriesProductsWithLocalPaths(series._id, cached);
+      if (!hasCriticalSeriesProductImagesReady(hydrated)) {
+        return false;
+      }
+
+      seriesProductImageReadyRef.current.add(series._id);
+      const cards = buildSeriesProductCards(series._id, hydrated);
+
+      if (mountedRef.current) {
+        setCurrentSubSeriesNameEN(series.nameEN);
+        setCurrentSeriesProducts(cards);
+      }
+      return true;
+    },
+    [
+      buildSeriesProductCards,
+      hasCriticalSeriesProductImagesReady,
+      hasSeriesProductsCache,
+      hydrateSeriesProductsWithLocalPaths,
+    ],
+  );
+
+  const preloadSecondSeries = useCallback(
+    async (list: SubSeriesItem[]) => {
+      const second = list[1];
+      if (!second) return;
+      await ensureSeriesDisplayImagePreloaded(second);
+      await loadSeriesProductsToCache(second._id, {
+        preloadProductImages: true,
+        preloadConcurrency: SECOND_SERIES_PRELOAD_CONCURRENCY,
+      });
+    },
+    [ensureSeriesDisplayImagePreloaded, loadSeriesProductsToCache],
+  );
+
+  const preloadRemainingSeries = useCallback(
+    async (list: SubSeriesItem[]) => {
+      const remaining = list.slice(2);
+      if (remaining.length === 0) return;
+
+      for (let i = 0; i < remaining.length; i += BACKGROUND_SERIES_BATCH_SIZE) {
+        const batch = remaining.slice(i, i + BACKGROUND_SERIES_BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (series) => {
+            await ensureSeriesDisplayImagePreloaded(series);
+            const items = await loadSeriesProductsToCache(series._id);
+            await ensureSeriesProductImagesPreloaded(
+              series._id,
+              items,
+              BACKGROUND_PRODUCT_PRELOAD_CONCURRENCY,
+            );
+          }),
+        );
+        if (i + BACKGROUND_SERIES_BATCH_SIZE < remaining.length) {
+          await new Promise((resolve) => setTimeout(resolve, 120));
+        }
+      }
+    },
+    [
+      ensureSeriesDisplayImagePreloaded,
+      ensureSeriesProductImagesPreloaded,
+      loadSeriesProductsToCache,
+    ],
   );
 
   /** Load sub-series list */
   const loadSubSeriesData = useCallback(async () => {
     try {
       const res = await listSubSeries(true);
-      if (res.code === 200) {
-        // Runtime: data may be { subSeries: [...] } or direct array
-        const rawData = res.data as any;
-        let rawList: any[] = Array.isArray(rawData)
-          ? rawData
-          : rawData?.subSeries || [];
-
-        // Sort by sortNum
-        rawList.sort(
-          (a: any, b: any) => (a.sortNum ?? 999) - (b.sortNum ?? 999),
-        );
-
-        const list: SubSeriesItem[] = rawList.map((item: any) => ({
-          _id: item._id,
-          name: item.name || "",
-          nameEN: item.nameEN || "",
-          displayImage: item.displayImage || "",
-          sortNum: item.sortNum,
-        }));
-
-        // Process display images
-        const cloudUrls = list
-          .map((s) => s.displayImage)
-          .filter((u) => u.startsWith("cloud://"));
-        if (cloudUrls.length > 0) {
-          const httpUrls = await processImages(cloudUrls, {
-            width: 600,
-            height: 700,
-            quality: 80,
-          });
-          const urlMap = new Map<string, string>();
-          cloudUrls.forEach((cu, i) => urlMap.set(cu, httpUrls[i]));
-          list.forEach((s) => {
-            if (s.displayImage.startsWith("cloud://")) {
-              s.displayImage = urlMap.get(s.displayImage) || s.displayImage;
-            }
-          });
-        }
-
-        if (mountedRef.current) {
-          setSubSeriesList(list);
-          subSeriesListRef.current = list;
-          if (list.length > 0) {
-            setCurrentSubSeriesNameEN(list[0].nameEN);
-          }
-        }
-
-        // Start preloading products
-        preloadAllSeriesProducts(list);
+      if (res.code !== 200) {
+        markFirstScreenReady();
+        return;
       }
+
+      // Runtime: data may be { subSeries: [...] } or direct array
+      const rawData = res.data as any;
+      let rawList: any[] = Array.isArray(rawData)
+        ? rawData
+        : rawData?.subSeries || [];
+
+      // Sort by sortNum
+      rawList.sort((a: any, b: any) => (a.sortNum ?? 999) - (b.sortNum ?? 999));
+
+      const list: SubSeriesItem[] = rawList.map((item: any) => ({
+        _id: item._id,
+        name: item.name || "",
+        nameEN: item.nameEN || "",
+        displayImage: item.displayImage || "",
+        sortNum: item.sortNum,
+      }));
+
+      // Process display images
+      const cloudUrls = list
+        .map((s) => s.displayImage)
+        .filter((u) => u.startsWith("cloud://"));
+      if (cloudUrls.length > 0) {
+        const httpUrls = await processImages(cloudUrls, {
+          width: 600,
+          height: 700,
+          quality: 80,
+        });
+        const urlMap = new Map<string, string>();
+        cloudUrls.forEach((cu, i) => urlMap.set(cu, httpUrls[i]));
+        list.forEach((s) => {
+          if (s.displayImage.startsWith("cloud://")) {
+            s.displayImage = urlMap.get(s.displayImage) || s.displayImage;
+          }
+        });
+      }
+
+      currentSeriesIndexRef.current = 0;
+      if (mountedRef.current) {
+        setCurrentSeriesIndex(0);
+        setSubSeriesList(list);
+        subSeriesListRef.current = list;
+        setCurrentSubSeriesNameEN(list[0]?.nameEN || "");
+      }
+
+      if (list.length === 0) {
+        if (mountedRef.current) setCurrentSeriesProducts([]);
+        markFirstScreenReady();
+        return;
+      }
+
+      // Start second-series warmup as early as possible to reduce first swipe flash.
+      const secondWarmupTask = list[1]
+        ? preloadSecondSeries(list)
+        : Promise.resolve();
+
+      // First screen gate: first sub-series image + first product list image preloading
+      const first = list[0];
+      await ensureSeriesDisplayImagePreloaded(first);
+      const firstProducts = await loadSeriesProductsToCache(first._id, {
+        preloadProductImages: true,
+        preloadConcurrency: CRITICAL_PRODUCT_PRELOAD_CONCURRENCY,
+      });
+      const firstCards = buildSeriesProductCards(first._id, firstProducts);
+      if (mountedRef.current) {
+        setCurrentSeriesProducts(firstCards);
+        setCurrentSubSeriesNameEN(first.nameEN);
+      }
+      markFirstScreenReady();
+
+      // Keep second as highest priority, then warm up the rest in background.
+      void secondWarmupTask.finally(() => {
+        void preloadRemainingSeries(list);
+      });
     } catch {
-      // silently fail
+      markFirstScreenReady();
     }
-  }, [processImages, preloadAllSeriesProducts]);
+  }, [
+    buildSeriesProductCards,
+    ensureSeriesDisplayImagePreloaded,
+    loadSeriesProductsToCache,
+    markFirstScreenReady,
+    preloadRemainingSeries,
+    preloadSecondSeries,
+    processImages,
+  ]);
 
   /** Load model show data */
   const loadModelShowData = useCallback(async () => {
@@ -393,27 +840,46 @@ export default function Home() {
     }
   }, []);
 
+  const clearSeriesResumeTimer = useCallback(() => {
+    if (!seriesResumeRef.current) return;
+    clearTimeout(seriesResumeRef.current);
+    seriesResumeRef.current = null;
+  }, []);
+
   const startSeriesAutoplay = useCallback(() => {
     stopSeriesAutoplay();
     if (!seriesInViewportRef.current) return;
     if (subSeriesListRef.current.length === 0) return;
 
     seriesAutoplayRef.current = setInterval(() => {
-      if (seriesIsTouchingRef.current) return;
+      if (seriesIsTouchingRef.current || seriesProductsIsTouchingRef.current) {
+        return;
+      }
       const list = subSeriesListRef.current;
       const idx = currentSeriesIndexRef.current;
       const next = (idx + 1) % list.length;
       const nextSeries = list[next];
-      const cached = nextSeries
-        ? allSeriesProductsRef.current[nextSeries._id] || []
-        : [];
 
+      seriesAnimatingRef.current = true;
       currentSeriesIndexRef.current = next;
       setCurrentSeriesIndex(next);
-      setCurrentSubSeriesNameEN(nextSeries?.nameEN || "");
-      setCurrentSeriesProducts(cached);
+      void warmupSeriesAndSyncIfActive(nextSeries, next);
     }, AUTOPLAY_INTERVAL);
-  }, [stopSeriesAutoplay]);
+  }, [stopSeriesAutoplay, warmupSeriesAndSyncIfActive]);
+
+  const scheduleSeriesAutoplayResume = useCallback(
+    (delay: number = SERIES_RESUME_DELAY) => {
+      clearSeriesResumeTimer();
+      seriesResumeRef.current = setTimeout(() => {
+        seriesResumeRef.current = null;
+        if (!seriesInViewportRef.current) return;
+        if (seriesIsTouchingRef.current || seriesProductsIsTouchingRef.current)
+          return;
+        startSeriesAutoplay();
+      }, delay);
+    },
+    [clearSeriesResumeTimer, startSeriesAutoplay],
+  );
 
   const stopModelAutoplay = useCallback(() => {
     if (modelAutoplayRef.current) {
@@ -439,21 +905,83 @@ export default function Home() {
   }, [stopModelAutoplay]);
 
   // ===== Touch Handlers =====
-  const onSeriesTouchStart = useCallback(() => {
-    seriesIsTouchingRef.current = true;
-    stopSeriesAutoplay();
-    if (seriesResumeRef.current) {
-      clearTimeout(seriesResumeRef.current);
-      seriesResumeRef.current = null;
+  const onSeriesTouchStart = useCallback(
+    (e: any) => {
+      const touch = e?.touches?.[0];
+      if (touch) {
+        seriesTouchStartPointRef.current = {
+          x: touch.pageX ?? touch.clientX ?? 0,
+          y: touch.pageY ?? touch.clientY ?? 0,
+        };
+      } else {
+        seriesTouchStartPointRef.current = null;
+      }
+      seriesTouchDirectionRef.current = "none";
+      if (seriesSwipeDisabled) setSeriesSwipeDisabled(false);
+
+      seriesIsTouchingRef.current = true;
+      stopSeriesAutoplay();
+      clearSeriesResumeTimer();
+    },
+    [clearSeriesResumeTimer, seriesSwipeDisabled, stopSeriesAutoplay],
+  );
+
+  const onSeriesTouchMove = useCallback((e: any) => {
+    if (seriesTouchDirectionRef.current !== "none") return;
+    const start = seriesTouchStartPointRef.current;
+    const touch = e?.touches?.[0];
+    if (!start || !touch) return;
+
+    const currentX = touch.pageX ?? touch.clientX ?? 0;
+    const currentY = touch.pageY ?? touch.clientY ?? 0;
+    const dx = Math.abs(currentX - start.x);
+    const dy = Math.abs(currentY - start.y);
+
+    if (dx < 6 && dy < 6) return;
+
+    if (dy > dx + 4) {
+      seriesTouchDirectionRef.current = "vertical";
+      setSeriesSwipeDisabled(true);
+      return;
     }
-  }, [stopSeriesAutoplay]);
+
+    if (dx > dy + 4) {
+      seriesTouchDirectionRef.current = "horizontal";
+    }
+  }, []);
+
+  const finalizeSeriesTouch = useCallback(() => {
+    seriesIsTouchingRef.current = false;
+    seriesTouchStartPointRef.current = null;
+    seriesTouchDirectionRef.current = "none";
+    if (seriesSwipeDisabled) setSeriesSwipeDisabled(false);
+    scheduleSeriesAutoplayResume();
+  }, [scheduleSeriesAutoplayResume, seriesSwipeDisabled]);
 
   const onSeriesTouchEnd = useCallback(() => {
-    seriesIsTouchingRef.current = false;
-    seriesResumeRef.current = setTimeout(() => {
-      if (seriesInViewportRef.current) startSeriesAutoplay();
-    }, RESUME_DELAY);
-  }, [startSeriesAutoplay]);
+    finalizeSeriesTouch();
+  }, [finalizeSeriesTouch]);
+
+  const onSeriesTouchCancel = useCallback(() => {
+    finalizeSeriesTouch();
+  }, [finalizeSeriesTouch]);
+
+  const onProductsTouchStart = useCallback(() => {
+    seriesProductsIsTouchingRef.current = true;
+    stopSeriesAutoplay();
+    clearSeriesResumeTimer();
+  }, [clearSeriesResumeTimer, stopSeriesAutoplay]);
+
+  const onProductsTouchEnd = useCallback(() => {
+    seriesProductsIsTouchingRef.current = false;
+    scheduleSeriesAutoplayResume();
+  }, [scheduleSeriesAutoplayResume]);
+
+  const onProductsScroll = useCallback(() => {
+    if (!seriesInViewportRef.current) return;
+    stopSeriesAutoplay();
+    scheduleSeriesAutoplayResume();
+  }, [scheduleSeriesAutoplayResume, stopSeriesAutoplay]);
 
   const onModelTouchStart = useCallback(() => {
     modelIsTouchingRef.current = true;
@@ -468,7 +996,7 @@ export default function Home() {
     modelIsTouchingRef.current = false;
     modelResumeRef.current = setTimeout(() => {
       if (modelInViewportRef.current) startModelAutoplay();
-    }, RESUME_DELAY);
+    }, MODEL_RESUME_DELAY);
   }, [startModelAutoplay]);
 
   // ===== IntersectionObserver Setup =====
@@ -491,7 +1019,12 @@ export default function Home() {
             const inView = (res.intersectionRatio ?? 0) >= 0.5;
             if (inView && !seriesInViewportRef.current) {
               seriesInViewportRef.current = true;
-              if (!seriesIsTouchingRef.current) startSeriesAutoplay();
+              if (
+                !seriesIsTouchingRef.current &&
+                !seriesProductsIsTouchingRef.current
+              ) {
+                startSeriesAutoplay();
+              }
             } else if (!inView && seriesInViewportRef.current) {
               seriesInViewportRef.current = false;
               stopSeriesAutoplay();
@@ -538,6 +1071,11 @@ export default function Home() {
   const clearAllTimersAndObservers = useCallback(() => {
     stopSeriesAutoplay();
     stopModelAutoplay();
+    seriesAnimatingRef.current = false;
+    if (firstScreenGuardRef.current) {
+      clearTimeout(firstScreenGuardRef.current);
+      firstScreenGuardRef.current = null;
+    }
     if (seriesResumeRef.current) {
       clearTimeout(seriesResumeRef.current);
       seriesResumeRef.current = null;
@@ -558,13 +1096,26 @@ export default function Home() {
 
   // ===== Setup model observer when model data loads =====
   useEffect(() => {
-    if (modelShowList.length > 0) {
-      setTimeout(() => setupModelObserver(), 100);
-    }
+    if (modelShowList.length <= 0) return;
+    const timer = setTimeout(() => {
+      if (mountedRef.current) {
+        setupModelObserver();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, [modelShowList.length, setupModelObserver]);
 
   // ===== Lifecycle Hooks =====
   useLoad(() => {
+    mountedRef.current = true;
+    firstScreenReadyRef.current = false;
+    seriesAnimatingRef.current = false;
+    if (firstScreenGuardRef.current) {
+      clearTimeout(firstScreenGuardRef.current);
+    }
+    firstScreenGuardRef.current = setTimeout(() => {
+      markFirstScreenReady();
+    }, 8000);
     setShowLoading(true);
     loadBannersData();
     loadSubSeriesData();
@@ -578,7 +1129,11 @@ export default function Home() {
 
   useDidShow(() => {
     setCurrentTab(0);
-    if (seriesInViewportRef.current && !seriesIsTouchingRef.current) {
+    if (
+      seriesInViewportRef.current &&
+      !seriesIsTouchingRef.current &&
+      !seriesProductsIsTouchingRef.current
+    ) {
       startSeriesAutoplay();
     }
     if (modelInViewportRef.current && !modelIsTouchingRef.current) {
@@ -608,29 +1163,42 @@ export default function Home() {
       if (idx === -1 || idx === currentSeriesIndexRef.current) return;
 
       const series = list[idx];
-      const cached = allSeriesProductsRef.current[series._id] || [];
-
+      seriesAnimatingRef.current = true;
       currentSeriesIndexRef.current = idx;
       setCurrentSeriesIndex(idx);
-      setCurrentSubSeriesNameEN(series.nameEN);
-      setCurrentSeriesProducts(cached);
+      void warmupSeriesAndSyncIfActive(series, idx);
     },
-    [],
+    [warmupSeriesAndSyncIfActive],
   );
 
-  const onSeriesSwiperChange = useCallback((e) => {
-    const current = e.detail.current;
-    if (current === currentSeriesIndexRef.current) return;
+  const onSeriesSwiperChange = useCallback(
+    (e) => {
+      const current = e.detail.current;
+      const list = subSeriesListRef.current;
+      const series = list[current];
+      seriesAnimatingRef.current = true;
+      currentSeriesIndexRef.current = current;
+      setCurrentSeriesIndex(current);
+      void warmupSeriesAndSyncIfActive(series, current);
+    },
+    [warmupSeriesAndSyncIfActive],
+  );
 
-    const list = subSeriesListRef.current;
-    const series = list[current];
-    const cached = series ? allSeriesProductsRef.current[series._id] || [] : [];
+  const onSeriesAnimationFinish = useCallback(
+    (e) => {
+      const current = e.detail.current;
+      seriesAnimatingRef.current = false;
+      currentSeriesIndexRef.current = current;
+      setCurrentSeriesIndex(current);
 
-    currentSeriesIndexRef.current = current;
-    setCurrentSeriesIndex(current);
-    setCurrentSubSeriesNameEN(series?.nameEN || "");
-    setCurrentSeriesProducts(cached);
-  }, []);
+      const synced = syncSeriesContentFromCache(current);
+      if (!synced) {
+        const series = subSeriesListRef.current[current];
+        void warmupSeriesAndSyncIfActive(series, current);
+      }
+    },
+    [syncSeriesContentFromCache, warmupSeriesAndSyncIfActive],
+  );
 
   const onModelTabSelect = useCallback((item: { id: string; text: string }) => {
     const list = modelShowListRef.current;
@@ -651,7 +1219,9 @@ export default function Home() {
 
   const goToSeriesDetail = useCallback((id: string) => {
     if (!id) return;
-    Taro.navigateTo({ url: `/pages-sub/series-detail/index?subSeriesId=${id}` });
+    Taro.navigateTo({
+      url: `/pages-sub/series-detail/index?subSeriesId=${id}`,
+    });
   }, []);
 
   const goToProductDetail = useCallback((skuId: string) => {
@@ -680,16 +1250,25 @@ export default function Home() {
       <ScrollView
         className={styles.mainContent}
         scrollY
+        enhanced
+        enablePassive
+        minDragDistance={4}
+        showScrollbar={false}
         style={{ top: swiperContainerTop, height: swiperContainerHeight }}
       >
         {/* Banner Section */}
-        <View className={styles.bannerSection} style={{ height: "100%" }}>
+        <View
+          className={styles.bannerSection}
+          style={{
+            height: "calc(100% - 100rpx - env(safe-area-inset-bottom))",
+          }}
+        >
           {isLoadingBanners ? (
             <View className={styles.loadingContainer}>
               <Text>正在加载轮播图...</Text>
             </View>
           ) : (
-            <Swiper
+            <TaroSwiper
               className={styles.bannerSwiper}
               indicatorDots
               autoplay
@@ -697,18 +1276,20 @@ export default function Home() {
               circular
             >
               {banners.map((banner) => (
-                <SwiperItem key={banner._id} onClick={onBannerTap}>
+                <TaroSwiperItem key={banner._id} onClick={onBannerTap}>
                   <Image
                     className={styles.bannerImage}
                     src={banner.image}
                     mode="aspectFill"
+                    lazyLoad={false}
+                    {...WEAPP_IMAGE_NO_FADE}
                   />
                   {banner.text && (
                     <View className={styles.bannerNav}>{banner.text}</View>
                   )}
-                </SwiperItem>
+                </TaroSwiperItem>
               ))}
-            </Swiper>
+            </TaroSwiper>
           )}
 
           {/* Pull-up hint arrow */}
@@ -727,20 +1308,29 @@ export default function Home() {
             onSelect={onSeriesTabSelect}
           />
 
-          <Swiper
+          <NutSwiper
             id="home-series-swiper"
             className={styles.seriesSwiper}
+            height="700rpx"
+            defaultValue={0}
+            autoPlay={false}
+            indicator={false}
+            loop
             current={currentSeriesIndex}
             onChange={onSeriesSwiperChange}
+            onAnimationFinish={onSeriesAnimationFinish}
+            disableTouch={seriesSwipeDisabled}
             onTouchStart={onSeriesTouchStart}
+            onTouchMove={onSeriesTouchMove}
             onTouchEnd={onSeriesTouchEnd}
+            onTouchCancel={onSeriesTouchCancel}
             nextMargin="100rpx"
             circular
             duration={400}
             easingFunction="easeOutCubic"
           >
             {subSeriesList.map((series, index) => (
-              <SwiperItem key={series._id}>
+              <NutSwiper.Item key={series._id}>
                 <View className={styles.swiperItemInner}>
                   <View
                     className={`${styles.seriesImageWrapper} ${
@@ -754,28 +1344,35 @@ export default function Home() {
                       className={styles.seriesImage}
                       src={series.displayImage}
                       mode="aspectFill"
+                      lazyLoad={false}
+                      {...WEAPP_IMAGE_NO_FADE}
                     />
                   </View>
                 </View>
-              </SwiperItem>
+              </NutSwiper.Item>
             ))}
-          </Swiper>
+          </NutSwiper>
 
           {/* Products horizontal scroll */}
-          <ScrollView className={styles.productsScroll} scrollX enableFlex>
+          <ScrollView
+            className={styles.productsScroll}
+            scrollX
+            enableFlex
+            showScrollbar={false}
+            onTouchStart={onProductsTouchStart}
+            onTouchEnd={onProductsTouchEnd}
+            onTouchCancel={onProductsTouchEnd}
+            onScroll={onProductsScroll}
+          >
             <View className={styles.productsContainer}>
               {currentSeriesProducts.length > 0 ? (
-                currentSeriesProducts.map((product) => (
+                currentSeriesProducts.map((product, productIndex) => (
                   <View
-                    key={product._id}
+                    key={`slot-${productIndex}`}
                     className={styles.productCard}
                     onClick={() => goToProductDetail(product._id)}
                   >
-                    <Image
-                      className={styles.productImage}
-                      src={product.skuMainImages?.[0] || ""}
-                      mode="aspectFill"
-                    />
+                    <BufferedProductImage src={product.image} />
                     <Text className={styles.seriesName}>
                       {currentSubSeriesNameEN}
                     </Text>
@@ -805,7 +1402,7 @@ export default function Home() {
               onSelect={onModelTabSelect}
             />
 
-            <Swiper
+            <TaroSwiper
               id="home-model-swiper"
               className={styles.modelSwiper}
               current={currentModelIndex}
@@ -818,7 +1415,7 @@ export default function Home() {
               easingFunction="easeOutCubic"
             >
               {modelShowList.map((model, index) => (
-                <SwiperItem key={model._id}>
+                <TaroSwiperItem key={model._id}>
                   <View className={styles.swiperItemInner}>
                     <View
                       className={`${styles.modelImageWrapper} ${
@@ -832,12 +1429,14 @@ export default function Home() {
                         className={styles.modelImage}
                         src={model.image}
                         mode="aspectFill"
+                        lazyLoad={false}
+                        {...WEAPP_IMAGE_NO_FADE}
                       />
                     </View>
                   </View>
-                </SwiperItem>
+                </TaroSwiperItem>
               ))}
-            </Swiper>
+            </TaroSwiper>
           </View>
         )}
 

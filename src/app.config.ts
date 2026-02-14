@@ -7,6 +7,12 @@ export default defineAppConfig({
     "pages/my/index",
     "pages/product-detail/index",
   ],
+  preloadRule: {
+    'pages/home/index': {
+      network: 'all',
+      packages: ['pages-sub'],
+    },
+  },
   subPackages: [
     {
       root: "pages-sub",

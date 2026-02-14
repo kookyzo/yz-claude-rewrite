@@ -1,6 +1,9 @@
 import Taro from '@tarojs/taro'
 import { IMAGE_BATCH_SIZE, IMAGE_BATCH_CONCURRENCY } from '@/constants'
 
+const preloadedImagePathMap = new Map<string, string>()
+const preloadImageTaskMap = new Map<string, Promise<boolean>>()
+
 /** 将 cloud:// URL 转为临时 HTTP URL */
 export async function processCloudUrl(cloudUrl: string): Promise<string> {
   if (!cloudUrl.startsWith('cloud://')) return cloudUrl
@@ -63,4 +66,94 @@ export function compressImageUrl(
   if (!httpUrl.startsWith('http')) return httpUrl
   if (httpUrl.includes('imageView2') || httpUrl.includes('imageMogr2')) return httpUrl
   return `${httpUrl}?imageView2/1/w/${width}/h/${height}/q/${quality}`
+}
+
+/** 获取预加载后的本地路径（若存在） */
+export function getPreloadedImagePath(url: string): string | undefined {
+  return preloadedImagePathMap.get(url)
+}
+
+function withTimeout(task: Promise<boolean>, timeoutMs: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    let timer: ReturnType<typeof setTimeout> | null = null
+    let done = false
+
+    const finish = (ok: boolean) => {
+      if (done) return
+      done = true
+      if (timer) clearTimeout(timer)
+      resolve(ok)
+    }
+
+    timer = setTimeout(() => finish(false), timeoutMs)
+    task.then((ok) => finish(ok)).catch(() => finish(false))
+  })
+}
+
+/** 预加载单张图片到本地缓存（像素级） */
+export async function preloadImage(url: string, timeoutMs: number = 3000): Promise<boolean> {
+  if (!url) return false
+  if (preloadedImagePathMap.has(url)) return true
+
+  const existingTask = preloadImageTaskMap.get(url)
+  if (existingTask) {
+    return withTimeout(existingTask, timeoutMs)
+  }
+
+  const task = Taro.getImageInfo({ src: url })
+    .then((res) => {
+      const localPath = (res as { path?: string }).path
+      if (localPath) {
+        preloadedImagePathMap.set(url, localPath)
+      }
+      return true
+    })
+    .catch(() => false)
+    .finally(() => {
+      preloadImageTaskMap.delete(url)
+    })
+
+  preloadImageTaskMap.set(url, task)
+  return withTimeout(task, timeoutMs)
+}
+
+export interface PreloadImagesResult {
+  total: number
+  success: number
+  failed: string[]
+}
+
+/** 批量预加载图片，默认低并发，避免瞬时请求洪峰 */
+export async function preloadImages(
+  urls: string[],
+  options?: { concurrency?: number; timeoutMs?: number },
+): Promise<PreloadImagesResult> {
+  const timeoutMs = options?.timeoutMs ?? 3000
+  const concurrency = Math.max(1, options?.concurrency ?? 3)
+
+  const uniqueUrls = [...new Set(urls.filter((u): u is string => !!u))]
+  if (uniqueUrls.length === 0) {
+    return { total: 0, success: 0, failed: [] }
+  }
+
+  let success = 0
+  const failed: string[] = []
+
+  for (let i = 0; i < uniqueUrls.length; i += concurrency) {
+    const batch = uniqueUrls.slice(i, i + concurrency)
+    const results = await Promise.all(batch.map((url) => preloadImage(url, timeoutMs)))
+    results.forEach((ok, idx) => {
+      if (ok) {
+        success += 1
+        return
+      }
+      failed.push(batch[idx])
+    })
+  }
+
+  return {
+    total: uniqueUrls.length,
+    success,
+    failed,
+  }
 }

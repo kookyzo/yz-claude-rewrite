@@ -12,7 +12,10 @@ interface UseAuthReturn {
 }
 
 export function useAuth(): UseAuthReturn {
-  const { isLoggedIn, isRegistered, userId, userInfo, login } = useUserStore()
+  const isLoggedIn = useUserStore(state => state.isLoggedIn)
+  const isRegistered = useUserStore(state => state.isRegistered)
+  const userId = useUserStore(state => state.userId)
+  const userInfo = useUserStore(state => state.userInfo)
 
   const ensureLogin = async (): Promise<boolean> => {
     if (isLoggedIn) return true

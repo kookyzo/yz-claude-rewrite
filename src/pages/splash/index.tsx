@@ -8,7 +8,8 @@ import styles from './index.module.scss'
 export default function Splash() {
   const [videoEnded, setVideoEnded] = useState(false)
   const [showPrivacyPopup, setShowPrivacyPopup] = useState(false)
-  const { privacyAgreed, agreePrivacy } = useAppStore()
+  const privacyAgreed = useAppStore(state => state.privacyAgreed)
+  const agreePrivacy = useAppStore(state => state.agreePrivacy)
 
   const navigateToHome = () => {
     Taro.switchTab({ url: '/pages/home/index' })
