@@ -111,7 +111,7 @@ function BufferedProductImage({ src }: BufferedProductImageProps) {
           className={`${styles.productImage} ${styles.productImageCurrent}`}
           src={displaySrc}
           mode="aspectFill"
-          lazyLoad={false}
+          lazyLoad
           {...WEAPP_IMAGE_NO_FADE}
         />
       ) : null}
@@ -120,7 +120,7 @@ function BufferedProductImage({ src }: BufferedProductImageProps) {
           className={`${styles.productImage} ${styles.productImagePending}`}
           src={pendingSrc}
           mode="aspectFill"
-          lazyLoad={false}
+          lazyLoad
           onLoad={onPendingLoaded}
           {...WEAPP_IMAGE_NO_FADE}
         />
@@ -150,6 +150,8 @@ const MODEL_SKU_IDS = [
 const AUTOPLAY_INTERVAL = 3000;
 const SERIES_RESUME_DELAY = 6000;
 const MODEL_RESUME_DELAY = 3000;
+const MODEL_OBSERVER_SETUP_RETRY_DELAY = 100;
+const MODEL_OBSERVER_SETUP_MAX_RETRY = 10;
 const SERIES_SWIPER_SELECTOR = "#home-series-swiper";
 const MODEL_SWIPER_SELECTOR = "#home-model-swiper";
 const IMAGE_PRELOAD_TIMEOUT = 3000;
@@ -220,6 +222,9 @@ export default function Home() {
   const modelAutoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const seriesResumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const modelResumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modelObserverSetupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const seriesInViewportRef = useRef(false);
   const modelInViewportRef = useRef(false);
@@ -846,6 +851,12 @@ export default function Home() {
     seriesResumeRef.current = null;
   }, []);
 
+  const clearModelResumeTimer = useCallback(() => {
+    if (!modelResumeRef.current) return;
+    clearTimeout(modelResumeRef.current);
+    modelResumeRef.current = null;
+  }, []);
+
   const startSeriesAutoplay = useCallback(() => {
     stopSeriesAutoplay();
     if (!seriesInViewportRef.current) return;
@@ -986,18 +997,22 @@ export default function Home() {
   const onModelTouchStart = useCallback(() => {
     modelIsTouchingRef.current = true;
     stopModelAutoplay();
-    if (modelResumeRef.current) {
-      clearTimeout(modelResumeRef.current);
-      modelResumeRef.current = null;
-    }
-  }, [stopModelAutoplay]);
+    clearModelResumeTimer();
+  }, [clearModelResumeTimer, stopModelAutoplay]);
 
   const onModelTouchEnd = useCallback(() => {
     modelIsTouchingRef.current = false;
+    clearModelResumeTimer();
     modelResumeRef.current = setTimeout(() => {
       if (modelInViewportRef.current) startModelAutoplay();
     }, MODEL_RESUME_DELAY);
-  }, [startModelAutoplay]);
+  }, [clearModelResumeTimer, startModelAutoplay]);
+
+  const clearModelObserverSetupTimer = useCallback(() => {
+    if (!modelObserverSetupTimerRef.current) return;
+    clearTimeout(modelObserverSetupTimerRef.current);
+    modelObserverSetupTimerRef.current = null;
+  }, []);
 
   // ===== IntersectionObserver Setup =====
   const setupSeriesObserver = useCallback(() => {
@@ -1071,18 +1086,13 @@ export default function Home() {
   const clearAllTimersAndObservers = useCallback(() => {
     stopSeriesAutoplay();
     stopModelAutoplay();
+    clearSeriesResumeTimer();
+    clearModelResumeTimer();
+    clearModelObserverSetupTimer();
     seriesAnimatingRef.current = false;
     if (firstScreenGuardRef.current) {
       clearTimeout(firstScreenGuardRef.current);
       firstScreenGuardRef.current = null;
-    }
-    if (seriesResumeRef.current) {
-      clearTimeout(seriesResumeRef.current);
-      seriesResumeRef.current = null;
-    }
-    if (modelResumeRef.current) {
-      clearTimeout(modelResumeRef.current);
-      modelResumeRef.current = null;
     }
     if (seriesObserverRef.current) {
       seriesObserverRef.current.disconnect();
@@ -1092,18 +1102,40 @@ export default function Home() {
       modelObserverRef.current.disconnect();
       modelObserverRef.current = null;
     }
-  }, [stopSeriesAutoplay, stopModelAutoplay]);
+  }, [
+    clearModelObserverSetupTimer,
+    clearModelResumeTimer,
+    clearSeriesResumeTimer,
+    stopModelAutoplay,
+    stopSeriesAutoplay,
+  ]);
 
   // ===== Setup model observer when model data loads =====
   useEffect(() => {
     if (modelShowList.length <= 0) return;
-    const timer = setTimeout(() => {
-      if (mountedRef.current) {
-        setupModelObserver();
-      }
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [modelShowList.length, setupModelObserver]);
+    let retries = 0;
+
+    const trySetup = () => {
+      if (!mountedRef.current || modelObserverRef.current) return;
+      setupModelObserver();
+      if (modelObserverRef.current) return;
+      if (retries >= MODEL_OBSERVER_SETUP_MAX_RETRY) return;
+
+      retries += 1;
+      clearModelObserverSetupTimer();
+      modelObserverSetupTimerRef.current = setTimeout(() => {
+        modelObserverSetupTimerRef.current = null;
+        trySetup();
+      }, MODEL_OBSERVER_SETUP_RETRY_DELAY);
+    };
+
+    clearModelObserverSetupTimer();
+    trySetup();
+
+    return () => {
+      clearModelObserverSetupTimer();
+    };
+  }, [clearModelObserverSetupTimer, modelShowList.length, setupModelObserver]);
 
   // ===== Lifecycle Hooks =====
   useLoad(() => {
@@ -1144,6 +1176,9 @@ export default function Home() {
   useDidHide(() => {
     stopSeriesAutoplay();
     stopModelAutoplay();
+    clearSeriesResumeTimer();
+    clearModelResumeTimer();
+    clearModelObserverSetupTimer();
   });
 
   useUnload(() => {
@@ -1281,7 +1316,7 @@ export default function Home() {
                     className={styles.bannerImage}
                     src={banner.image}
                     mode="aspectFill"
-                    lazyLoad={false}
+                    lazyLoad
                     {...WEAPP_IMAGE_NO_FADE}
                   />
                   {banner.text && (
@@ -1344,7 +1379,7 @@ export default function Home() {
                       className={styles.seriesImage}
                       src={series.displayImage}
                       mode="aspectFill"
-                      lazyLoad={false}
+                      lazyLoad
                       {...WEAPP_IMAGE_NO_FADE}
                     />
                   </View>
@@ -1366,9 +1401,9 @@ export default function Home() {
           >
             <View className={styles.productsContainer}>
               {currentSeriesProducts.length > 0 ? (
-                currentSeriesProducts.map((product, productIndex) => (
+                currentSeriesProducts.map((product) => (
                   <View
-                    key={`slot-${productIndex}`}
+                    key={product._id}
                     className={styles.productCard}
                     onClick={() => goToProductDetail(product._id)}
                   >
@@ -1429,7 +1464,7 @@ export default function Home() {
                         className={styles.modelImage}
                         src={model.image}
                         mode="aspectFill"
-                        lazyLoad={false}
+                        lazyLoad
                         {...WEAPP_IMAGE_NO_FADE}
                       />
                     </View>
