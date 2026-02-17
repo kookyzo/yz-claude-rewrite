@@ -5,7 +5,6 @@ import TopBarWithBack from '@/components/TopBarWithBack'
 import SlidingBar from '@/components/SlidingBar'
 import LoadingBar from '@/components/LoadingBar'
 import ReviewPopup from '@/components/ReviewPopup'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import { useAuth } from '@/hooks/useAuth'
 import { useSystemInfo } from '@/hooks/useSystemInfo'
@@ -376,7 +375,6 @@ export default function OrderList() {
         onClose={() => setShowReviewPopup(false)}
       />
 
-      <FloatBtn onPress={() => setIsPopupShow(true)} />
       <FloatPopup visible={isPopupShow} onClose={() => setIsPopupShow(false)} />
     </View>
   )

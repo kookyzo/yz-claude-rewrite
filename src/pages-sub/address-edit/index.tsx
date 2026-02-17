@@ -3,7 +3,6 @@ import { View, Text, Input, Picker, Image } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import TopBarWithBack from '@/components/TopBarWithBack'
 import FloatPopup from '@/components/FloatPopup'
-import FloatBtn from '@/components/FloatBtn'
 import { useSystemInfo } from '@/hooks/useSystemInfo'
 import { useAuth } from '@/hooks/useAuth'
 import * as addressService from '@/services/address.service'
@@ -324,7 +323,6 @@ export default function AddressEdit() {
         </View>
       </View>
 
-      <FloatBtn onPress={() => setShowFloatPopup(true)} />
       <FloatPopup
         visible={showFloatPopup}
         onClose={() => setShowFloatPopup(false)}

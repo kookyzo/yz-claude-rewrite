@@ -10,7 +10,7 @@ export interface User {
   gender?: string;
   title?: string;
   mail?: string;
-  region?: string[];
+  region?: string[] | string;
 }
 
 export interface Address {

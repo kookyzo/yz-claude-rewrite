@@ -3,7 +3,6 @@ import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import TopBarWithBack from '@/components/TopBarWithBack'
 import FloatPopup from '@/components/FloatPopup'
-import FloatBtn from '@/components/FloatBtn'
 import { useSystemInfo } from '@/hooks/useSystemInfo'
 import { useAuth } from '@/hooks/useAuth'
 import * as addressService from '@/services/address.service'
@@ -170,7 +169,6 @@ export default function AddressList() {
         )}
       </View>
 
-      <FloatBtn onPress={() => setShowFloatPopup(true)} />
       <FloatPopup
         visible={showFloatPopup}
         onClose={() => setShowFloatPopup(false)}

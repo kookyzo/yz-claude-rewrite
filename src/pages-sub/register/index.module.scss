@@ -1,49 +1,46 @@
-/* 注册页 — 1:1 还原 legacy register.wxss */
-
 .registerContainer {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #fff;
   display: flex;
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom);
-  font-family: 'PINGFANG SC';
+  font-family: "PINGFANG SC";
 }
 
 .registerContent {
   flex: 1;
-  padding: 28rpx;
+  padding: 32rpx;
   padding-bottom: 40rpx;
 }
 
 /* Section Title */
 .sectionTitle {
   text-align: center;
-  margin-bottom: 36rpx;
+  margin-bottom: 24rpx;
   margin-top: 36rpx;
 }
 
 .sectionTitleText {
-  font-size: 32rpx;
-  font-weight: 600;
+  font-size: 28rpx;
+  font-weight: 500;
   color: #111111;
 }
 
 /* 姓名行（两列布局） */
 .nameRow {
   display: flex;
-  gap: 24rpx;
+  gap: 12rpx;
   margin-bottom: 48rpx;
 }
 
 .nameItem {
   flex: 1;
-  min-width: 0;
 }
 
 /* 表单标签 */
 .formLabel {
   display: block;
-  font-size: 28rpx;
+  font-size: 24rpx;
   font-weight: 600;
   color: #111111;
   margin-bottom: 16rpx;
@@ -52,9 +49,9 @@
 /* 输入框包装器 */
 .inputWrapper {
   position: relative;
-  width: 80%;
-  height: 96rpx;
-  background-color: rgb(210, 210, 210);
+  width: 100%;
+  height: 68rpx;
+  background-color: #f7f7f7;
   display: flex;
   align-items: center;
   padding: 0 32rpx;
@@ -67,7 +64,8 @@
 
 .formInput {
   flex: 1;
-  font-size: 28rpx;
+  padding-block: 32rpx;
+  font-size: 24rpx;
   color: #111111;
   background: transparent;
 }
@@ -75,7 +73,7 @@
 .requiredStar {
   position: absolute;
   left: 14rpx;
-  color: #000000;
+  color: #e35204;
   font-size: 28rpx;
 }
 
@@ -122,7 +120,7 @@
 }
 
 .genderLabel {
-  font-size: 28rpx;
+  font-size: 24rpx;
   color: #111111;
 }
 
@@ -135,9 +133,10 @@
   position: relative;
   display: flex;
   align-items: center;
-  height: 96rpx;
-  background-color: rgb(210, 210, 210);
+  height: 68rpx;
+  background-color: #f7f7f7;
   padding: 0 32rpx;
+  padding-block: 32rpx;
   margin-top: 16rpx;
   box-sizing: border-box;
 
@@ -148,7 +147,7 @@
 
 .phoneInput {
   flex: 1;
-  font-size: 28rpx;
+  font-size: 24rpx;
   color: #111111;
   background: transparent;
   margin-left: 8rpx;
@@ -187,11 +186,12 @@
 
 .pickerDisplay {
   width: 100%;
-  height: 96rpx;
-  background-color: rgb(210, 210, 210);
+  height: 68rpx;
+  background-color: #f7f7f7;
   display: flex;
   align-items: center;
   padding: 0 32rpx;
+  padding-block: 32rpx;
   justify-content: space-between;
   box-sizing: border-box;
   position: relative;
@@ -200,26 +200,26 @@
 .pickerRequiredStar {
   position: absolute;
   left: 18rpx;
-  color: #000000;
+  color: #e35204;
   font-size: 28rpx;
 }
 
 .pickerText {
   flex: 1;
-  font-size: 28rpx;
+  font-size: 24rpx;
   color: #111111;
   margin-left: 8rpx;
 }
 
 .pickerPlaceholder {
   flex: 1;
-  font-size: 28rpx;
+  font-size: 24rpx;
   color: #999999;
   margin-left: 8rpx;
 }
 
 .pickerArrow {
-  font-size: 32rpx;
+  font-size: 28rpx;
   color: #999999;
   transform: rotate(180deg);
 }
@@ -256,11 +256,11 @@
   font-size: 24rpx;
   color: rgb(32, 32, 32);
   line-height: 1.7;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .requiredText {
-  color: #000000;
+  color: #e35204;
   margin-left: 8rpx;
 }
 
@@ -272,9 +272,9 @@
 }
 
 .selectAllText {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #000000;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: #e35204;
 }
 
 /* 底部按钮 */

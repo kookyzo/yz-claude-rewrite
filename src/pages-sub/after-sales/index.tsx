@@ -3,7 +3,6 @@ import { View, Text, Image, Textarea, Picker, ScrollView } from '@tarojs/compone
 import Taro, { useLoad } from '@tarojs/taro'
 import TopBarWithBack from '@/components/TopBarWithBack'
 import SlidingBar from '@/components/SlidingBar'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import { useAuth } from '@/hooks/useAuth'
 import { useSystemInfo } from '@/hooks/useSystemInfo'
@@ -323,7 +322,6 @@ export default function AfterSales() {
         </View>
       </ScrollView>
 
-      <FloatBtn onPress={() => setIsPopupShow(true)} />
       <FloatPopup visible={isPopupShow} onClose={() => setIsPopupShow(false)} />
     </View>
   )

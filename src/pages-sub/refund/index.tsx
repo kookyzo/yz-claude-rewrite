@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { View, Text, Input, Textarea } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import TopBarWithBack from '@/components/TopBarWithBack'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import { useSystemInfo } from '@/hooks/useSystemInfo'
 import { callCloudFunction } from '@/services/cloud'
@@ -146,7 +145,6 @@ export default function Refund() {
         </View>
       </View>
 
-      <FloatBtn onPress={() => setIsPopupShow(true)} />
       <FloatPopup visible={isPopupShow} onClose={() => setIsPopupShow(false)} />
     </View>
   )

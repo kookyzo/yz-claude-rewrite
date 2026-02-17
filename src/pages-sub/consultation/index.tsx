@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { View, Text, Navigator } from '@tarojs/components'
 import TopBarWithBack from '@/components/TopBarWithBack'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import { useSystemInfo } from '@/hooks/useSystemInfo'
 import styles from './index.module.scss'
@@ -27,7 +26,6 @@ export default function Consultation() {
         </Navigator>
       </View>
 
-      <FloatBtn onPress={() => setShowPopup(true)} />
       <FloatPopup visible={showPopup} onClose={() => setShowPopup(false)} />
     </View>
   )

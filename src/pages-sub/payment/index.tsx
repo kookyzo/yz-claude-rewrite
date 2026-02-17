@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { View, Text, Image, ScrollView, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useUnload, useRouter } from '@tarojs/taro'
 import TopBarWithBack from '@/components/TopBarWithBack'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import { useAuth } from '@/hooks/useAuth'
 import { useImageProcessor } from '@/hooks/useImageProcessor'
@@ -589,7 +588,6 @@ export default function Payment() {
       </View>
 
       {/* 浮动咨询 */}
-      <FloatBtn onPress={() => setShowFloatPopup(true)} />
       <FloatPopup visible={showFloatPopup} onClose={() => setShowFloatPopup(false)} />
     </View>
   )

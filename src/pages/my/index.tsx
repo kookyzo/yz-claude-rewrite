@@ -16,61 +16,16 @@ import styles from "./index.module.scss";
 
 const TOP_BAR_CONTENT_MARGIN_TOP_RPX = 20;
 
-/** 复姓列表 */
-const COMPOUND_SURNAMES = [
-  "欧阳",
-  "太史",
-  "端木",
-  "上官",
-  "司马",
-  "东方",
-  "独孤",
-  "南宫",
-  "诸葛",
-  "闻人",
-  "夏侯",
-  "皇甫",
-  "公孙",
-  "长孙",
-  "慕容",
-  "司徒",
-  "司空",
-  "宇文",
-  "尉迟",
-  "令狐",
-  "西门",
-];
-
-/** 计算问候语 */
-function computeGreeting(
-  userInfo: { nickname?: string; lastName?: string; title?: string } | null,
-): string {
-  if (!userInfo) return "欢迎";
-  const name = userInfo.nickname || userInfo.lastName || "";
-  if (!name) return "欢迎";
-
-  // 提取姓氏
-  let surname = name.substring(0, 1);
-  for (const cs of COMPOUND_SURNAMES) {
-    if (name.startsWith(cs)) {
-      surname = cs;
-      break;
-    }
-  }
-
-  const title = userInfo.title || "";
-  return title ? `${surname}${title}` : name;
-}
-
 export default function My() {
   const { ensureLogin } = useAuth();
   const { statusBarHeight, navBarHeight, screenWidth } = useSystemInfo();
+  const isLoggedIn = useUserStore(state => state.isLoggedIn);
   const isRegistered = useUserStore(state => state.isRegistered);
   const fetchUserInfo = useUserStore(state => state.fetchUserInfo);
 
   const [isPopupShow, setIsPopupShow] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  const [greeting, setGreeting] = useState("欢迎");
+  const [nickname, setNickname] = useState("欢迎");
   const [wishlistCount, setWishlistCount] = useState(0);
   const topBarHeightRpx = useMemo(() => {
     const rpxRatio = 750 / screenWidth;
@@ -85,7 +40,8 @@ export default function My() {
     try {
       await fetchUserInfo();
       const currentState = useUserStore.getState();
-      setGreeting(computeGreeting(currentState.userInfo));
+      const info = currentState.userInfo;
+      setNickname(info?.nickname || info?.lastName || "欢迎");
 
       // 获取心愿单数量
       if (currentState.userId) {
@@ -104,6 +60,18 @@ export default function My() {
     }
   }, [fetchUserInfo]);
 
+  const handleAuthClick = useCallback(async () => {
+    const loggedIn = await ensureLogin();
+    if (!loggedIn) return;
+
+    await fetchUserInfo();
+    const currentState = useUserStore.getState();
+
+    if (!currentState.isRegistered) {
+      navigateTo("/pages-sub/register/index");
+    }
+  }, [ensureLogin, fetchUserInfo]);
+
   useLoad(() => {
     setPageLoading(true);
     ensureLogin().then(() => loadUserData());
@@ -111,9 +79,13 @@ export default function My() {
 
   useDidShow(() => {
     useAppStore.getState().setCurrentTab(3);
-    // 从编辑信息页返回时重新计算问候语
     const currentState = useUserStore.getState();
-    setGreeting(computeGreeting(currentState.userInfo));
+    const info = currentState.userInfo;
+    setNickname(info?.nickname || info?.lastName || "欢迎");
+
+    if (currentState.isLoggedIn) {
+      loadUserData();
+    }
   });
 
   /** 我的订单 */
@@ -170,7 +142,13 @@ export default function My() {
           />
           <View className={styles.userName}>
             <Text className={styles.welcomeText}>您好，欢迎来到Y.ZHENG</Text>
-            <Text className={styles.greetingText}>{greeting}</Text>
+            {isLoggedIn && isRegistered ? (
+              <Text className={styles.greetingText}>{nickname}</Text>
+            ) : (
+              <View className={styles.authButton} onClick={handleAuthClick}>
+                <Text className={styles.authButtonText}>注册 / 登录</Text>
+              </View>
+            )}
           </View>
         </View>
 

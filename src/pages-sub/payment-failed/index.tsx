@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { View, Text, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import TopBarWithBack from '@/components/TopBarWithBack'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import styles from './index.module.scss'
 
@@ -44,7 +43,6 @@ export default function PaymentFailed() {
         </View>
       </View>
 
-      <FloatBtn onPress={() => setShowFloatPopup(true)} />
       <FloatPopup visible={showFloatPopup} onClose={() => setShowFloatPopup(false)} />
     </View>
   )

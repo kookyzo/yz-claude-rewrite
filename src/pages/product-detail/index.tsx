@@ -11,7 +11,6 @@ import {
 import Taro, { useRouter, useLoad, useShareAppMessage } from "@tarojs/taro";
 import TopBarWithBack from "@/components/TopBarWithBack";
 import LoadingBar from "@/components/LoadingBar";
-import FloatBtn from "@/components/FloatBtn";
 import FloatPopup from "@/components/FloatPopup";
 import SizePopup from "@/components/SizePopup";
 import CartSuccessPopup from "@/components/CartSuccessPopup";
@@ -954,7 +953,6 @@ export default function ProductDetail() {
             </View>
 
             {/* Popups */}
-            <FloatBtn onPress={() => setShowFloatPopup(true)} />
             <FloatPopup
               visible={showFloatPopup}
               onClose={() => setShowFloatPopup(false)}

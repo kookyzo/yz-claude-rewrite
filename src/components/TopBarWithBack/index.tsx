@@ -1,4 +1,4 @@
-import { View, Image } from '@tarojs/components'
+import { View, Text, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useSystemInfo } from '@/hooks/useSystemInfo'
 import styles from './index.module.scss'
@@ -8,11 +8,14 @@ interface TopBarWithBackProps {
   imageSrc?: string
   /** 背景色，默认 'white' */
   backgroundColor?: string
+  /** 标题文字，传入后替代 logo 显示 */
+  title?: string
 }
 
 export default function TopBarWithBack({
   imageSrc = '/assets/icons/top.png',
   backgroundColor = 'white',
+  title,
 }: TopBarWithBackProps) {
   const { statusBarHeight, navBarHeight } = useSystemInfo()
 
@@ -44,12 +47,16 @@ export default function TopBarWithBack({
             mode='aspectFit'
           />
         </View>
-        <Image
-          className={styles.logo}
-          src={imageSrc}
-          mode='heightFix'
-          style={{ height: `${navBarHeight - 8}px` }}
-        />
+        {title ? (
+          <Text className={styles.title}>{title}</Text>
+        ) : (
+          <Image
+            className={styles.logo}
+            src={imageSrc}
+            mode='heightFix'
+            style={{ height: `${navBarHeight - 8}px` }}
+          />
+        )}
       </View>
     </View>
   )

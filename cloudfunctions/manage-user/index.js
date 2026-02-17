@@ -7,8 +7,8 @@ const models = client.models;
 
 // 允许更新的用户字段
 const ALLOWED_USER_FIELDS = [
-  'lastName', 'firstName', 'phone', 'title', 
-  'birthday', 'region', 'openId', 'userId'
+  'lastName', 'firstName', 'nickname', 'phone', 'title',
+  'gender', 'birthday', 'region', 'mail', 'openId', 'userId'
 ];
 
 // 用于后台管理的用户列表查询字段（更详细）

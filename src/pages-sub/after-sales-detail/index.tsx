@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import TopBarWithBack from '@/components/TopBarWithBack'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import { useSystemInfo } from '@/hooks/useSystemInfo'
 import styles from './index.module.scss'
@@ -91,7 +90,6 @@ export default function AfterSalesDetail() {
         </View>
       </View>
 
-      <FloatBtn onPress={() => setIsPopupShow(true)} />
       <FloatPopup visible={isPopupShow} onClose={() => setIsPopupShow(false)} />
     </View>
   )

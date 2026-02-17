@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { View, Text, Image, Input, Button, Picker } from '@tarojs/components'
 import Taro, { useShareAppMessage } from '@tarojs/taro'
 import TopBarWithBack from '@/components/TopBarWithBack'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import { useSystemInfo } from '@/hooks/useSystemInfo'
 import { useUserStore } from '@/stores/useUserStore'
@@ -395,7 +394,6 @@ export default function Reservation() {
           </View>
         )}
 
-        <FloatBtn onPress={() => setIsPopupShow(true)} />
         <FloatPopup
           visible={isPopupShow}
           onClose={() => setIsPopupShow(false)}

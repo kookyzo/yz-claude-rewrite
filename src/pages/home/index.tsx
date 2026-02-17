@@ -33,7 +33,6 @@ import {
 import { Swiper as NutSwiper } from "@nutui/nutui-react-taro";
 import TopBar, { TOP_BAR_BOTTOM_PADDING_RPX } from "@/components/TopBar";
 import SlidingBar from "@/components/SlidingBar";
-import FloatBtn from "@/components/FloatBtn";
 import FloatPopup from "@/components/FloatPopup";
 import LoadingBar from "@/components/LoadingBar";
 import CustomTabBar from "@/custom-tab-bar";
@@ -1496,7 +1495,6 @@ export default function Home() {
       </ScrollView>
 
       {/* Floating consultation */}
-      <FloatBtn onPress={() => setIsPopupShow(true)} />
       <FloatPopup visible={isPopupShow} onClose={() => setIsPopupShow(false)} />
 
       {/* Loading indicator */}

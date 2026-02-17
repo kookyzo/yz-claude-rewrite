@@ -7,7 +7,6 @@ import { useAppStore } from '@/stores/useAppStore'
 import { formatPrice } from '@/utils/format'
 import { navigateTo, switchTab } from '@/utils/navigation'
 import TopBar from '@/components/TopBar'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import LoadingBar from '@/components/LoadingBar'
 import CustomTabBar from '@/custom-tab-bar'
@@ -240,7 +239,6 @@ export default function Cart() {
         </View>
       )}
 
-      <FloatBtn onPress={() => setIsPopupShow(true)} />
       <FloatPopup visible={isPopupShow} onClose={() => setIsPopupShow(false)} />
 
       <CustomTabBar />

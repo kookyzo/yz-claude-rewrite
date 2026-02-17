@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import TopBarWithBack from '@/components/TopBarWithBack'
-import FloatBtn from '@/components/FloatBtn'
 import FloatPopup from '@/components/FloatPopup'
 import { useAuth } from '@/hooks/useAuth'
 import * as addressService from '@/services/address.service'
@@ -147,7 +146,6 @@ export default function PaymentSelectAddress() {
         </View>
       )}
 
-      <FloatBtn onPress={() => setShowFloatPopup(true)} />
       <FloatPopup visible={showFloatPopup} onClose={() => setShowFloatPopup(false)} />
     </View>
   )

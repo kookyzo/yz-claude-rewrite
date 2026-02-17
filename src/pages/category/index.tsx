@@ -16,7 +16,6 @@ import {
 } from "@/services/product.service";
 import { formatPrice } from "@/utils/format";
 import TopBar, { TOP_BAR_BOTTOM_PADDING_RPX } from "@/components/TopBar";
-import FloatBtn from "@/components/FloatBtn";
 import FloatPopup from "@/components/FloatPopup";
 import LoadingBar from "@/components/LoadingBar";
 import CustomTabBar from "@/custom-tab-bar";
@@ -87,6 +86,9 @@ interface ProductItem {
   price: number;
   skuMainImages: string[];
   formattedPrice: string;
+  materialId?: string;
+  subSeriesId?: string;
+  categoryId?: string;
 }
 
 interface SelectedFilter {
@@ -404,6 +406,9 @@ export default function Category() {
           price: p.price || 0,
           skuMainImages: [firstImage],
           formattedPrice: formatPrice(p.price || 0),
+          materialId: p.materialId,
+          subSeriesId: p.subSeriesId,
+          categoryId: p.categoryId,
         };
       });
 
@@ -1036,12 +1041,25 @@ export default function Category() {
 
   // ===== Render helpers =====
 
-  /** Get the two secondary filter sections (excluding the primary filter type) */
+  /** Get the two secondary filter sections (excluding the primary filter type), filtered by available products */
   const getSecondaryFilterSections = (): FilterSection[] => {
     if (!selectedFilter.type) return [];
-    return filterSectionsRef.current.filter(
-      (s) => s.type !== selectedFilter.type,
-    );
+    const subSeriesIds = new Set(products.map((p) => p.subSeriesId).filter(Boolean));
+    const categoryIds = new Set(products.map((p) => p.categoryId).filter(Boolean));
+    const materialIds = new Set(products.map((p) => p.materialId).filter(Boolean));
+
+    return filterSectionsRef.current
+      .filter((s) => s.type !== selectedFilter.type)
+      .map((s) => ({
+        ...s,
+        items: s.items.filter((item) => {
+          if (s.type === "subseries") return subSeriesIds.has(item.id);
+          if (s.type === "category") return categoryIds.has(item.id);
+          if (s.type === "material") return item.materialIds?.some((id) => materialIds.has(id)) ?? false;
+          return true;
+        }),
+      }))
+      .filter((s) => s.items.length > 0);
   };
 
   /** Check if a secondary item is selected */
@@ -1378,7 +1396,6 @@ export default function Category() {
       )}
 
       {/* Floating consultation */}
-      <FloatBtn onPress={() => setIsPopupShow(true)} />
       <FloatPopup visible={isPopupShow} onClose={() => setIsPopupShow(false)} />
 
       {/* Page loading bar */}
