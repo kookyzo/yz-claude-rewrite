@@ -51,6 +51,12 @@ export default defineAppConfig({
     navigationBarTextStyle: "black",
     navigationStyle: "custom",
   },
+  requiredPrivateInfos: ['chooseLocation'],
+  permission: {
+    'scope.userLocation': {
+      desc: '你的位置信息将用于自动填写收货地址',
+    },
+  },
   tabBar: {
     custom: true,
     color: "#999999",

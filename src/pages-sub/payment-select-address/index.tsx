@@ -29,7 +29,7 @@ export default function PaymentSelectAddress() {
     try {
       const res = await addressService.listAddresses(userId)
       if (res.code === 200 && res.data) {
-        const list = Array.isArray(res.data) ? res.data : []
+        const list = Array.isArray(res.data) ? res.data : (res.data as any).items || []
         const defId = list.find(a => a.isDefault)?._id || list[0]?._id || ''
         setAddresses(list)
         setIsEmpty(list.length === 0)

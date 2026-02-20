@@ -2,6 +2,81 @@ import { callCloudFunction } from '@/services/cloud'
 import type { CloudResponse } from '@/types/api'
 import type { CartItem } from '@/types/cart'
 
+interface RawCartItem {
+  _id?: string
+  _cartItemId?: string
+  cartItem_Sku?: { _id?: string } | string
+  cartItem_Spu?: { _id?: string } | string
+  quantity?: number
+  status?: boolean
+  unitPrice?: number
+  material?: string
+  size?: string
+  skuInfo?: {
+    _id?: string
+    skuId?: string
+    nameCN?: string
+    nameEN?: string
+    skuMainImages?: string[]
+    price?: number
+    size?: string
+  }
+  spuInfo?: {
+    _id?: string
+    spuId?: string
+    name?: string
+    mainImages?: string[]
+    referencePrice?: number
+  }
+  materialInfo?: {
+    nameCN?: string
+  }
+  sizeInfo?: {
+    value?: string
+  }
+}
+
+interface RawCartListData {
+  cart?: any
+  items?: RawCartItem[]
+}
+
+function toId(value: { _id?: string } | string | undefined): string {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value._id || ''
+}
+
+function normalizeCartItem(item: RawCartItem): CartItem {
+  const skuInfo = item.skuInfo || {}
+  const spuInfo = item.spuInfo || {}
+  const materialInfo = item.materialInfo || {}
+  const sizeInfo = item.sizeInfo || {}
+
+  const skuId = toId(item.cartItem_Sku) || skuInfo._id || ''
+  const spuId = toId(item.cartItem_Spu) || spuInfo._id || ''
+  const price =
+    Number(item.unitPrice ?? skuInfo.price ?? spuInfo.referencePrice ?? 0) || 0
+  const quantity = Math.max(1, Number(item.quantity) || 1)
+
+  return {
+    _cartItemId: item._id || item._cartItemId || '',
+    skuId,
+    spuId,
+    quantity,
+    checked: !!item.status,
+    name: skuInfo.nameCN || spuInfo.name || '',
+    nameEN: skuInfo.nameEN || '',
+    price,
+    image:
+      (Array.isArray(skuInfo.skuMainImages) ? skuInfo.skuMainImages[0] : '') ||
+      (Array.isArray(spuInfo.mainImages) ? spuInfo.mainImages[0] : '') ||
+      '',
+    material: item.material || materialInfo.nameCN || '',
+    size: item.size || sizeInfo.value || skuInfo.size || '',
+  }
+}
+
 /** 添加商品到购物车 */
 export function addToCart(
   userId: string,
@@ -10,19 +85,45 @@ export function addToCart(
 ): Promise<CloudResponse> {
   return callCloudFunction('manage-cart', {
     action: 'add',
-    _userId: userId,
-    _skuId: skuId,
-    quantity: qty,
-    useSpecification: true,
+    data: {
+      _userId: userId,
+      _skuId: skuId,
+      quantity: qty,
+      useSpecification: true,
+    },
   })
 }
 
 /** 获取购物车列表 */
-export function getCartItems(userId: string): Promise<CloudResponse<CartItem[]>> {
-  return callCloudFunction<CartItem[]>('manage-cart', {
+export async function getCartItems(
+  userId: string
+): Promise<CloudResponse<CartItem[]>> {
+  const res = await callCloudFunction<RawCartListData>('manage-cart', {
     action: 'list',
-    _userId: userId,
+    data: {
+      _userId: userId,
+    },
   })
+
+  if (res.code !== 200) {
+    return res as CloudResponse<CartItem[]>
+  }
+
+  const data = res.data as any
+  const rawItems: RawCartItem[] = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.items)
+      ? data.items
+      : []
+
+  const items = rawItems
+    .map(normalizeCartItem)
+    .filter((item) => !!item._cartItemId)
+
+  return {
+    ...res,
+    data: items,
+  }
 }
 
 /** 切换单个商品选中状态 */
@@ -32,8 +133,10 @@ export function toggleItemSelected(
 ): Promise<CloudResponse> {
   return callCloudFunction('manage-cart', {
     action: 'selected',
-    _cartItemId: cartItemId,
-    selected,
+    data: {
+      _cartItemId: cartItemId,
+      selected,
+    },
   })
 }
 
@@ -44,8 +147,10 @@ export function toggleAllSelected(
 ): Promise<CloudResponse> {
   return callCloudFunction('manage-cart', {
     action: 'selectedAll',
-    _userId: userId,
-    selected,
+    data: {
+      _userId: userId,
+      selected,
+    },
   })
 }
 
@@ -53,7 +158,9 @@ export function toggleAllSelected(
 export function removeCartItem(cartItemId: string): Promise<CloudResponse> {
   return callCloudFunction('manage-cart', {
     action: 'remove',
-    _cartItemId: cartItemId,
+    data: {
+      _cartItemId: cartItemId,
+    },
   })
 }
 
@@ -64,7 +171,9 @@ export function updateCartItemQty(
 ): Promise<CloudResponse> {
   return callCloudFunction('manage-cart', {
     action: 'update',
-    _cartItemId: cartItemId,
-    quantity: qty,
+    data: {
+      _cartItemId: cartItemId,
+      quantity: qty,
+    },
   })
 }

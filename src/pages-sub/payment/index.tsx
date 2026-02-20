@@ -80,8 +80,11 @@ export default function Payment() {
       }
       // fallback: first address
       const listRes = await addressService.listAddresses(userId)
-      if (listRes.code === 200 && listRes.data && listRes.data.length > 0) {
-        setAddress(listRes.data[0])
+      if (listRes.code === 200 && listRes.data) {
+        const list = Array.isArray(listRes.data) ? listRes.data : (listRes.data as any).items || []
+        if (list.length > 0) {
+          setAddress(list[0])
+        }
       }
     } catch {
       // no address available

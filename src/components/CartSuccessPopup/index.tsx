@@ -1,5 +1,4 @@
 import { View, Text } from '@tarojs/components'
-import { Popup } from '@nutui/nutui-react-taro'
 import styles from './index.module.scss'
 
 interface CartSuccessPopupProps {
@@ -19,27 +18,28 @@ export default function CartSuccessPopup({
   onGoToCart,
   onClose,
 }: CartSuccessPopupProps) {
+  if (!visible) return null
+
   return (
-    <Popup
-      visible={visible}
-      position='center'
-      closeable={false}
-      overlay
-      closeOnOverlayClick
-      onClose={onClose}
-      style={{ borderRadius: '20rpx', width: '600rpx' }}
-    >
-      <View className={styles.container}>
-        <Text className={styles.title}>已加入购物车</Text>
-        <View className={styles.btnGroup}>
-          <View className={styles.continueBtn} onClick={onContinue}>
-            <Text className={styles.continueBtnText}>继续选购</Text>
-          </View>
-          <View className={styles.cartBtn} onClick={onGoToCart}>
-            <Text className={styles.cartBtnText}>前往购物车</Text>
+    <View className={styles.overlay} onClick={onClose}>
+      <View
+        className={styles.panel}
+        onClick={(e) => {
+          e.stopPropagation()
+        }}
+      >
+        <View className={styles.container}>
+          <Text className={styles.title}>已加入购物车</Text>
+          <View className={styles.btnGroup}>
+            <View className={styles.continueBtn} onClick={onContinue}>
+              <Text className={styles.continueBtnText}>继续选购</Text>
+            </View>
+            <View className={styles.cartBtn} onClick={onGoToCart}>
+              <Text className={styles.cartBtnText}>前往购物车</Text>
+            </View>
           </View>
         </View>
       </View>
-    </Popup>
+    </View>
   )
 }

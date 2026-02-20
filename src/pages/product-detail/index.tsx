@@ -157,6 +157,7 @@ export default function ProductDetail() {
     returnPolicy: false,
   });
   const [showCartSuccess, setShowCartSuccess] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
   const [showFloatPopup, setShowFloatPopup] = useState(false);
   const [showSizePopup, setShowSizePopup] = useState(false);
   const currentSkuRef = useRef<any>(null);
@@ -385,6 +386,13 @@ export default function ProductDetail() {
   );
 
   useLoad(() => {
+    const userState = useUserStore.getState();
+    if (userState.isLoggedIn && !userState.isRegistered) {
+      userState.fetchUserInfo().catch(() => {
+        // Ignore prefetch failure and rely on ensureRegistered fallback.
+      });
+    }
+
     const { skuId: paramSkuId, spuId: paramSpuId } = router.params as any;
     if (paramSkuId) {
       loadProductDetail(paramSkuId);
@@ -459,12 +467,25 @@ export default function ProductDetail() {
 
   // Add to cart
   const handleAddToCart = useCallback(async () => {
+    if (addingToCart) return;
+
+    setAddingToCart(true);
+    Taro.showLoading({ title: "加入中...", mask: true });
+
     const registered = await ensureRegistered();
-    if (!registered) return;
+    if (!registered) {
+      Taro.hideLoading();
+      setAddingToCart(false);
+      return;
+    }
 
     const uid = useUserStore.getState().userId;
     const sku = currentSkuRef.current;
-    if (!uid || !sku) return;
+    if (!uid || !sku) {
+      Taro.hideLoading();
+      setAddingToCart(false);
+      return;
+    }
 
     try {
       const res = await cartService.addToCart(uid, sku._id, quantity);
@@ -475,8 +496,11 @@ export default function ProductDetail() {
       }
     } catch {
       Taro.showToast({ title: "加购失败", icon: "none" });
+    } finally {
+      Taro.hideLoading();
+      setAddingToCart(false);
     }
-  }, [ensureRegistered, quantity]);
+  }, [addingToCart, ensureRegistered, quantity]);
 
   // Direct buy (checkout)
   const handleCheckout = useCallback(async () => {
@@ -942,10 +966,10 @@ export default function ProductDetail() {
                 <Text className={styles.tabbarIconLabel}>购物车</Text>
               </View>
               <View
-                className={styles.tabbarAddToCart}
+                className={`${styles.tabbarAddToCart} ${addingToCart ? styles.tabbarAddToCartDisabled : ""}`}
                 onClick={handleAddToCart}
               >
-                <Text>加入购物车</Text>
+                <Text>{addingToCart ? "加入中..." : "加入购物车"}</Text>
               </View>
               <View className={styles.tabbarCheckout} onClick={handleCheckout}>
                 <Text>立即结算</Text>

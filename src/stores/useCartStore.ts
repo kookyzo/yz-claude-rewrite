@@ -45,7 +45,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
     try {
       const res = await cartService.getCartItems(userId)
       if (res.code === 200 && res.data) {
-        const items = res.data
+        const items = Array.isArray(res.data) ? res.data : []
         set({ items, loading: false, ...computeDerived(items) })
       } else {
         set({ loading: false })

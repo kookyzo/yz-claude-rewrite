@@ -5,12 +5,16 @@ import type { Address } from '@/types/user'
 /** 新增地址 */
 export function addAddress(
   userId: string,
-  data: Omit<Address, '_id' | 'userId' | 'isDefault'>
+  data: Pick<Address, 'receiver' | 'phone' | 'provinceCity' | 'detailAddress'> & {
+    isDefault?: boolean
+  }
 ): Promise<CloudResponse> {
   return callCloudFunction('manage-address', {
     action: 'add',
-    _userId: userId,
-    addressData: data,
+    data: {
+      _userId: userId,
+      addressData: data,
+    },
   })
 }
 
@@ -21,8 +25,10 @@ export function editAddress(
 ): Promise<CloudResponse> {
   return callCloudFunction('manage-address', {
     action: 'edit',
-    _addressId: addressId,
-    addressData: data,
+    data: {
+      _addressId: addressId,
+      addressData: data,
+    },
   })
 }
 
@@ -30,7 +36,9 @@ export function editAddress(
 export function deleteAddress(addressId: string): Promise<CloudResponse> {
   return callCloudFunction('manage-address', {
     action: 'delete',
-    _addressId: addressId,
+    data: {
+      _addressId: addressId,
+    },
   })
 }
 
@@ -38,7 +46,9 @@ export function deleteAddress(addressId: string): Promise<CloudResponse> {
 export function listAddresses(userId: string): Promise<CloudResponse<Address[]>> {
   return callCloudFunction<Address[]>('manage-address', {
     action: 'list',
-    _userId: userId,
+    data: {
+      _userId: userId,
+    },
   })
 }
 
@@ -46,7 +56,9 @@ export function listAddresses(userId: string): Promise<CloudResponse<Address[]>>
 export function setDefaultAddress(addressId: string): Promise<CloudResponse> {
   return callCloudFunction('manage-address', {
     action: 'setDefault',
-    _addressId: addressId,
+    data: {
+      _addressId: addressId,
+    },
   })
 }
 
@@ -54,6 +66,8 @@ export function setDefaultAddress(addressId: string): Promise<CloudResponse> {
 export function getDefaultAddress(userId: string): Promise<CloudResponse<Address>> {
   return callCloudFunction<Address>('manage-address', {
     action: 'getDefault',
-    _userId: userId,
+    data: {
+      _userId: userId,
+    },
   })
 }

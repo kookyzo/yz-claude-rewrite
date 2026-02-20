@@ -18,17 +18,32 @@ export function useAuth(): UseAuthReturn {
   const userInfo = useUserStore(state => state.userInfo)
 
   const ensureLogin = async (): Promise<boolean> => {
-    if (isLoggedIn) return true
+    const current = useUserStore.getState()
+    if (current.isLoggedIn && current.userId) return true
     try {
       await useUserStore.getState().login()
-      return useUserStore.getState().isLoggedIn
+      const next = useUserStore.getState()
+      return next.isLoggedIn && !!next.userId
     } catch {
       return false
     }
   }
 
   const ensureRegistered = async (): Promise<boolean> => {
-    if (isRegistered) return true
+    const loggedIn = await ensureLogin()
+    if (!loggedIn) return false
+
+    const beforeFetch = useUserStore.getState()
+    if (beforeFetch.isRegistered) return true
+
+    try {
+      await beforeFetch.fetchUserInfo()
+    } catch {
+      // Ignore and fallback to registration check below.
+    }
+
+    if (useUserStore.getState().isRegistered) return true
+
     Taro.navigateTo({ url: '/pages-sub/register/index' })
     return false
   }

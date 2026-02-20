@@ -1,3 +1,22 @@
+.overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel {
+  width: 600rpx;
+  border-radius: 20rpx;
+  background: #ffffff;
+}
+
 .container {
   padding: 50rpx 40rpx 40rpx;
 }

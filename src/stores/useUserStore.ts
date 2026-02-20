@@ -35,10 +35,16 @@ export const useUserStore = create<UserState>()(
       login: async () => {
         const res = await userService.login()
         if (res.code === 200 && res.data) {
+          const loginData = res.data as any
+          const resolvedUserId =
+            loginData._userId || loginData._id || loginData.userId || null
+          const resolvedOpenId =
+            loginData.openid || loginData.openId || null
+
           set({
             isLoggedIn: true,
-            userId: res.data.userId,
-            openId: res.data.openId,
+            userId: resolvedUserId,
+            openId: resolvedOpenId,
           })
         }
       },
@@ -51,7 +57,13 @@ export const useUserStore = create<UserState>()(
       fetchUserInfo: async () => {
         const res = await userService.getUserInfo()
         if (res.code === 200 && res.data) {
-          set({ isRegistered: true, userInfo: res.data })
+          set((state) => ({
+            isLoggedIn: true,
+            isRegistered: true,
+            userInfo: res.data,
+            userId: res.data?._id || state.userId,
+            openId: (res.data as any)?.openId || state.openId,
+          }))
         } else if (res.code === 404) {
           set({ isRegistered: false, userInfo: null })
         }

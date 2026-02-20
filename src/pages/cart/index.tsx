@@ -1,9 +1,11 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { View, Text, Image, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { useAuth } from '@/hooks/useAuth'
 import { useCartStore } from '@/stores/useCartStore'
 import { useAppStore } from '@/stores/useAppStore'
+import { useSystemInfo } from '@/hooks/useSystemInfo'
+import { TOP_BAR_BOTTOM_PADDING_RPX } from '@/components/TopBar'
 import { formatPrice } from '@/utils/format'
 import { navigateTo, switchTab } from '@/utils/navigation'
 import TopBar from '@/components/TopBar'
@@ -25,10 +27,24 @@ export default function Cart() {
   const updateQuantity = useCartStore(state => state.updateQuantity)
   const removeItem = useCartStore(state => state.removeItem)
 
+  const { statusBarHeight, navBarHeight, screenWidth } = useSystemInfo()
+
   const [isPopupShow, setIsPopupShow] = useState(false)
   const [pageLoading, setPageLoading] = useState(true)
+  const [layoutTop, setLayoutTop] = useState('190rpx')
+  const [layoutHeight, setLayoutHeight] = useState('calc(100vh - 190rpx)')
 
   const isEmpty = items.length === 0 && !loading
+
+  useEffect(() => {
+    const rpxRatio = 750 / screenWidth
+    const topBarTotalHeight =
+      (statusBarHeight + navBarHeight) * rpxRatio + TOP_BAR_BOTTOM_PADDING_RPX
+    const windowInfo = Taro.getWindowInfo()
+    const windowHeightRpx = windowInfo.windowHeight * rpxRatio
+    setLayoutTop(topBarTotalHeight + 'rpx')
+    setLayoutHeight(windowHeightRpx - topBarTotalHeight + 'rpx')
+  }, [statusBarHeight, navBarHeight, screenWidth])
 
   const refreshCart = useCallback(async () => {
     const loggedIn = await ensureLogin()
@@ -110,12 +126,12 @@ export default function Cart() {
 
       {/* 加载中 */}
       {loading && (
-        <View className={styles.loadingContainer} />
+        <View className={styles.loadingContainer} style={{ marginTop: layoutTop }} />
       )}
 
       {/* 空购物车 */}
       {isEmpty && !pageLoading && (
-        <View className={styles.emptyContainer}>
+        <View className={styles.emptyContainer} style={{ marginTop: layoutTop }}>
           <Image
             className={styles.cartIcon}
             src='/assets/icons/shopping_cart.png'
@@ -132,7 +148,7 @@ export default function Cart() {
 
       {/* 非空购物车 */}
       {items.length > 0 && !loading && (
-        <View className={styles.cartContainer}>
+        <View className={styles.cartContainer} style={{ marginTop: layoutTop, height: layoutHeight }}>
           <ScrollView className={styles.cartList} scrollY>
             {items.map((item) => (
               <View className={styles.item} key={item._cartItemId}>

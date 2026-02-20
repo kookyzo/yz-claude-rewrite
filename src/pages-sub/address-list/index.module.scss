@@ -1,10 +1,12 @@
 .container {
   min-height: 100vh;
-  font-family: 'PINGFANG SC';
+  font-family: "PINGFANG SC";
+  position: relative;
+  padding: 32rpx;
 }
 
 .title {
-  margin-left: 20rpx;
+  margin-left: rpx;
   margin-bottom: 40rpx;
   font-size: 40rpx;
   font-weight: 600;
@@ -25,9 +27,10 @@
 /* 新增地址按钮 */
 .addNewAddress {
   height: 85rpx;
-  width: 95%;
+  width: 100%;
+  margin: 0 auto;
   margin-top: 40rpx;
-  margin-left: 20rpx;
+
   background-color: black;
   color: rgb(255, 255, 255);
   display: flex;
@@ -154,6 +157,9 @@
   border-radius: 6rpx;
   text-align: center;
   min-width: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 底部占位 */
