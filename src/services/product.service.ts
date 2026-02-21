@@ -119,3 +119,15 @@ export function getRecommendations(skuId: string): Promise<CloudResponse<Sku[]>>
     data: { skuId, limit: 3 },
   })
 }
+
+/** 根据购物车商品分类获取推荐 */
+export function getRecommendationsByCategories(
+  spuIds: string[],
+  excludeSkuIds: string[],
+  limit = 8
+): Promise<CloudResponse<any>> {
+  return callCloudFunction('manage-recommendations', {
+    action: 'getRecommendationsByCategories',
+    data: { spuIds, excludeSkuIds, limit },
+  })
+}

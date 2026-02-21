@@ -62,6 +62,10 @@ exports.main = async (event, context) => {
       case 'toggleActive':
         return await toggleRecommendationActive(data);
       
+      // 根据购物车商品分类获取推荐
+      case 'getRecommendationsByCategories':
+        return await getRecommendationsByCategories(data);
+
       default:
         return {
           code: 400,
@@ -233,6 +237,106 @@ async function getRecommendations(data) {
       code: 500,
       message: "获取推荐商品失败: " + error.message
     };
+  }
+}
+
+/**
+ * 根据购物车商品分类获取推荐
+ */
+async function getRecommendationsByCategories(data) {
+  const { spuIds = [], excludeSkuIds = [], limit = 8 } = data;
+
+  if (!spuIds.length) {
+    return { code: 200, data: { recommendations: [], count: 0 } };
+  }
+
+  try {
+    // 1. 获取购物车商品的分类
+    const { data: spuList } = await models.ProductSpus.list({
+      filter: { where: { _id: { $in: spuIds } } },
+      select: { _id: true, category: true },
+      limit: 50,
+      envType: "prod"
+    });
+
+    const categoryIds = [...new Set(
+      (spuList.records || []).map(spu => {
+        const cat = spu.category;
+        return cat && typeof cat === 'object' ? cat._id : cat;
+      }).filter(Boolean)
+    )];
+
+    if (!categoryIds.length) {
+      return { code: 200, data: { recommendations: [], count: 0 } };
+    }
+
+    // 2. 查找同分类的其他SPU
+    const { data: categorySPUs } = await models.ProductSpus.list({
+      filter: {
+        where: {
+          category: { $in: categoryIds },
+          _id: { $nin: spuIds },
+          isOnSale: { $eq: true }
+        }
+      },
+      select: { _id: true },
+      limit: 50,
+      envType: "prod"
+    });
+
+    const candidateSpuIds = (categorySPUs.records || []).map(s => s._id);
+    if (!candidateSpuIds.length) {
+      return { code: 200, data: { recommendations: [], count: 0 } };
+    }
+
+    // 3. 获取这些SPU的在售SKU
+    const skuFilter = {
+      where: {
+        spuId: { $in: candidateSpuIds },
+        isOnSale: { $eq: true }
+      }
+    };
+    if (excludeSkuIds.length) {
+      skuFilter.where._id = { $nin: excludeSkuIds };
+    }
+
+    const { data: skuList } = await models.ProductSkus.list({
+      filter: skuFilter,
+      select: {
+        _id: true,
+        nameCN: true,
+        nameEN: true,
+        skuMainImages: true,
+        price: true
+      },
+      limit: limit * 3,
+      envType: "prod"
+    });
+
+    let records = skuList.records || [];
+
+    // 4. 随机打乱并截取
+    for (let i = records.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [records[i], records[j]] = [records[j], records[i]];
+    }
+    records = records.slice(0, limit);
+
+    const recommendations = records.map(sku => ({
+      _skuId: sku._id,
+      nameCN: sku.nameCN || '',
+      nameEN: sku.nameEN || '',
+      image: (sku.skuMainImages && sku.skuMainImages[0]) || '',
+      price: sku.price || 0
+    }));
+
+    return {
+      code: 200,
+      data: { recommendations, count: recommendations.length }
+    };
+  } catch (error) {
+    console.error('获取分类推荐失败:', error);
+    return { code: 500, message: "获取分类推荐失败: " + error.message };
   }
 }
 
